@@ -6,7 +6,7 @@ import {
   signInWithPopup, 
   signOut 
 } from './firebase';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onAuthStateChanged, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, collection, addDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 
 // --- Icons ---
@@ -148,7 +148,7 @@ function App() {
       {user ? (
         <DashboardPage user={user} onLogout={handleLogout} showToast={showToast} />
       ) : (
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage onLoginWithGoogle={handleLogin} showToast={showToast} />
       )}
 
       {/* Toast Render */}
@@ -165,16 +165,118 @@ function App() {
 }
 
 // --- Login Page Component ---
-function LoginPage({ onLogin }: { onLogin: () => void }) {
+function LoginPage({ 
+  onLoginWithGoogle, 
+  showToast 
+}: { 
+  onLoginWithGoogle: () => void; 
+  showToast: (type: 'success' | 'error', text: string) => void;
+}) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      showToast('error', 'Please fill in all fields.');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        showToast('success', 'Account created successfully!');
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('success', 'Logged in successfully!');
+      }
+    } catch (err: any) {
+      let msg = err.message || 'Authentication failed.';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'That email is already registered.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'Password should be at least 6 characters.';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/invalid-credential') {
+        msg = 'Invalid email or password.';
+      }
+      showToast('error', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-card" style={{ maxWidth: '400px', width: '90%' }}>
         <h1 className="auth-title">PocketCraft</h1>
         <p className="auth-subtitle">Server Web Control Dashboard</p>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.5' }}>
-          Connect securely to control your Minecraft server, players, AFK bots, and domains directly from your browser.
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Email Address</label>
+            <input 
+              type="email" 
+              className="form-control" 
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              style={{ width: '100%', marginTop: '4px', padding: '10px 14px' }}
+              required
+            />
+          </div>
+
+          <div style={{ textAlign: 'left' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Password</label>
+            <input 
+              type="password" 
+              className="form-control" 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              style={{ width: '100%', marginTop: '4px', padding: '10px 14px' }}
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            style={{ width: '100%', padding: '12px', marginTop: '8px' }}
+            disabled={loading}
+          >
+            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
+          </button>
+        </form>
+
+        <p style={{ fontSize: '13px', marginTop: '14px', color: 'var(--text-secondary)' }}>
+          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+          <span 
+            onClick={() => setIsSignUp(!isSignUp)} 
+            style={{ color: 'var(--accent-color)', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            {isSignUp ? 'Sign In' : 'Sign Up'}
+          </span>
         </p>
-        <button className="btn btn-primary" onClick={onLogin} style={{ width: '100%', padding: '14px' }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', gap: '10px' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>OR</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+        </div>
+
+        <button 
+          type="button"
+          className="btn btn-secondary" 
+          onClick={onLoginWithGoogle} 
+          style={{ width: '100%', padding: '12px' }}
+          disabled={loading}
+        >
           Sign In with Google
         </button>
       </div>
