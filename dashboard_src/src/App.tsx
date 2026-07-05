@@ -298,6 +298,7 @@ function DashboardPage({
   const [loading, setLoading] = useState(true);
   const [phoneOnline, setPhoneOnline] = useState(false);
   const [proUser, setProUser] = useState(false);
+  const [dashboardSecret, setDashboardSecret] = useState<string | null>(null);
 
   // Command Pending States
   const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
@@ -328,14 +329,17 @@ function DashboardPage({
       setLoading(false);
     });
 
-    // 2. Fetch User Entitlement State
+    // 2. Fetch User Entitlement State and Dashboard Secret
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
-        const tier = snapshot.data().premiumTier || 'none';
+        const data = snapshot.data();
+        const tier = data.premiumTier || 'none';
         setProUser(tier === 'premium' || tier === 'supportive');
+        setDashboardSecret(data.dashboardSecret || null);
       } else {
         setProUser(false);
+        setDashboardSecret(null);
       }
     });
 
@@ -374,7 +378,8 @@ function DashboardPage({
         createdAt: Timestamp.now(),
         status: 'pending',
         result: null,
-        errorMessage: null
+        errorMessage: null,
+        secret: dashboardSecret
       });
 
       // Listen for command result
