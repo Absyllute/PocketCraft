@@ -299,6 +299,7 @@ function DashboardPage({
   const [phoneOnline, setPhoneOnline] = useState(false);
   const [proUser, setProUser] = useState(false);
   const [dashboardSecret, setDashboardSecret] = useState<string | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Command Pending States
   const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
@@ -559,7 +560,7 @@ function DashboardPage({
             ) : (
               status.playersOnline.map(p => (
                 <div key={p.uuid || p.name} className="player-item">
-                  <div className="player-name-wrapper">
+                  <div className="player-name-wrapper" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(p)}>
                     <span className="player-name">{p.name}</span>
                     <span className={`player-badge ${p.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
                       {p.name.startsWith('.') ? 'Bedrock' : 'Java'}
@@ -627,6 +628,115 @@ function DashboardPage({
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setConfirmModal(null)}>Cancel</button>
               <button className="btn btn-danger" onClick={confirmModal.onConfirm}>Confirm Action</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Player Profile Modal */}
+      {selectedPlayer && (
+        <div className="modal-overlay" onClick={() => setSelectedPlayer(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 className="modal-title" style={{ margin: 0 }}>Player Profile</h3>
+              <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }} onClick={() => setSelectedPlayer(null)}>✕</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '18px' }}>
+              <img 
+                src={
+                  selectedPlayer.name.startsWith('.')
+                    ? `https://minotar.net/helm/Steve/100.png`
+                    : `https://crafatar.com/renders/body/${selectedPlayer.uuid || selectedPlayer.name}?size=120&overlay`
+                } 
+                alt={selectedPlayer.name}
+                style={{ height: '120px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `https://minotar.net/armor/body/${selectedPlayer.name}/120.png`;
+                }}
+              />
+              <div style={{ textAlign: 'center' }}>
+                <h4 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 6px 0', color: 'var(--text-primary)' }}>{selectedPlayer.name}</h4>
+                <span className={`player-badge ${selectedPlayer.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                  {selectedPlayer.name.startsWith('.') ? 'Bedrock Edition' : 'Java Edition'}
+                </span>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Player UUID</label>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={selectedPlayer.uuid || 'N/A'} 
+                  readOnly 
+                  style={{ fontSize: '12px', padding: '8px 12px', flex: 1, fontFamily: 'var(--font-mono)' }}
+                />
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '8px 12px', fontSize: '12px' }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedPlayer.uuid || '');
+                    showToast('success', 'UUID copied to clipboard!');
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Quick Admin Actions</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '12px', padding: '10px' }}
+                  onClick={() => handleAction('rcon', { command: `op "${selectedPlayer.name}"` }, `OP granted to ${selectedPlayer.name}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Make OP
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '12px', padding: '10px' }}
+                  onClick={() => handleAction('rcon', { command: `deop "${selectedPlayer.name}"` }, `OP revoked from ${selectedPlayer.name}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Remove OP
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '12px', padding: '10px' }}
+                  onClick={() => handleAction('rcon', { command: `gamemode creative "${selectedPlayer.name}"` }, `Creative mode set for ${selectedPlayer.name}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Creative Mode
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '12px', padding: '10px' }}
+                  onClick={() => handleAction('rcon', { command: `gamemode survival "${selectedPlayer.name}"` }, `Survival mode set for ${selectedPlayer.name}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Survival Mode
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  style={{ fontSize: '12px', padding: '10px', gridColumn: 'span 2' }}
+                  onClick={() => {
+                    setSelectedPlayer(null);
+                    triggerConfirm(
+                      'Ban Player',
+                      `Are you sure you want to permanently ban player ${selectedPlayer.name} from the server?`,
+                      () => handleAction('ban', { playerName: selectedPlayer.name }, `Banned player ${selectedPlayer.name}`)
+                    );
+                  }}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Ban Player
+                </button>
+              </div>
             </div>
           </div>
         </div>
