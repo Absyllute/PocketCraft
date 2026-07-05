@@ -15,6 +15,7 @@ export default function Navbar() {
     { href: "/blog", label: "Blog" },
     { href: "/roadmap", label: "Roadmap" },
     { href: "/community", label: "Community" },
+    { href: "/dashboard/", label: "Dashboard", external: true },
   ];
 
   return (
@@ -43,28 +44,45 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`relative font-bold uppercase tracking-wider text-sm transition-colors ${
-                  location.pathname === link.href
-                    ? "text-[#7FE620]"
-                    : theme === "dark"
-                    ? "text-white/50 hover:text-white"
-                    : "text-black/60 hover:text-black"
-                }`}
-              >
-                {link.label}
-                {location.pathname === link.href && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#7FE620] rounded-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
-              </Link>
-            ))}
+            {links.map((link) => {
+              if (link.external) {
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={`font-bold uppercase tracking-wider text-sm transition-colors ${
+                      theme === "dark"
+                        ? "text-white/50 hover:text-[#7FE620]"
+                        : "text-black/60 hover:text-[#7FE620]"
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`relative font-bold uppercase tracking-wider text-sm transition-colors ${
+                    location.pathname === link.href
+                      ? "text-[#7FE620]"
+                      : theme === "dark"
+                      ? "text-white/50 hover:text-white"
+                      : "text-black/60 hover:text-black"
+                  }`}
+                >
+                  {link.label}
+                  {location.pathname === link.href && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#7FE620] rounded-full"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
 
             {/* Dark Mode Toggle - Visible */}
             <motion.button
@@ -148,19 +166,32 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <Link
-                    to={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`block font-bold uppercase tracking-wider text-sm transition-colors ${
-                      location.pathname === link.href
-                        ? "text-[#7FE620]"
-                        : theme === "dark"
-                        ? "text-white/50 hover:text-white"
-                        : "text-black/60 hover:text-black"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
+                  {link.external ? (
+                    <a
+                      href={link.href}
+                      className={`block font-bold uppercase tracking-wider text-sm transition-colors ${
+                        theme === "dark"
+                          ? "text-white/50 hover:text-[#7FE620]"
+                          : "text-black/60 hover:text-[#7FE620]"
+                      }`}
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`block font-bold uppercase tracking-wider text-sm transition-colors ${
+                        location.pathname === link.href
+                          ? "text-[#7FE620]"
+                          : theme === "dark"
+                          ? "text-white/50 hover:text-white"
+                          : "text-black/60 hover:text-black"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </motion.div>
               ))}
             </motion.div>

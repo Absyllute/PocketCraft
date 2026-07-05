@@ -10,6 +10,15 @@ const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+const DashboardIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="7" height="9" x="3" y="3" rx="1" />
+    <rect width="7" height="5" x="14" y="3" rx="1" />
+    <rect width="7" height="9" x="14" y="12" rx="1" />
+    <rect width="7" height="5" x="3" y="16" rx="1" />
+  </svg>
+);
+
 const FloatingItem = ({
   src,
   delay,
@@ -282,6 +291,17 @@ export function ModernHero() {
           >
             <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
             Get it on Google Play
+          </motion.a>
+
+          <motion.a
+            href="/dashboard/"
+            className="px-6 sm:px-10 py-4 bg-[#7FE620] hover:bg-[#6ec21c] text-black font-bold text-sm uppercase tracking-wider transition-all rounded-lg shadow-[0_4px_0_0_rgba(127,230,32,0.3)] inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+            whileHover={{ scale: 1.05, y: -3 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <DashboardIcon className="w-4 h-4" />
+            Web Dashboard
           </motion.a>
 
           <motion.a

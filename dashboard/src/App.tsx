@@ -366,7 +366,7 @@ function DashboardPage({
       {/* Grid Layout */}
       <div className="dashboard-grid">
         {/* Server Control Card */}
-        <div className="panel-card" style={{ gridColumn: 'span 7' }}>
+        <div className="panel-card col-span-7">
           <h2 className="card-title"><ServerIcon /> Server Control</h2>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
             <div>
@@ -419,7 +419,7 @@ function DashboardPage({
         </div>
 
         {/* AFK Helper Card */}
-        <div className="panel-card" style={{ gridColumn: 'span 5' }}>
+        <div className="panel-card col-span-5">
           <h2 className="card-title"><BotIcon /> AFK Helper Bots</h2>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
             Spawn dummy players in-game to keep chunks loaded and farm operations active.
@@ -442,7 +442,7 @@ function DashboardPage({
         </div>
 
         {/* Players Online Card */}
-        <div className="panel-card" style={{ gridColumn: 'span 6' }}>
+        <div className="panel-card col-span-6">
           <h2 className="card-title"><UsersIcon /> Players Online ({status.playersOnline.length})</h2>
           <div className="player-list">
             {status.playersOnline.length === 0 ? (
@@ -572,7 +572,7 @@ function ConsoleCardComponent({
   };
 
   return (
-    <div className="panel-card" style={{ gridColumn: 'span 7' }}>
+    <div className="panel-card col-span-7">
       <h2 className="card-title"><ConsoleIcon /> RCON Console Command</h2>
       <div className="console-wrapper">
         <div className="console-scrollback" ref={scrollRef}>
@@ -644,7 +644,7 @@ function WhitelistCardComponent({
   };
 
   return (
-    <div className="panel-card" style={{ gridColumn: 'span 6' }}>
+    <div className="panel-card col-span-6">
       <h2 className="card-title"><ShieldIcon /> Whitelist Manager ({whitelist.length})</h2>
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
         <input 
@@ -732,7 +732,7 @@ function SubdomainCardComponent({
   };
 
   return (
-    <div className="panel-card" style={{ gridColumn: 'span 5' }}>
+    <div className="panel-card col-span-5">
       <h2 className="card-title"><GlobeIcon /> Custom IP Subdomain</h2>
       
       {!proUser ? (
