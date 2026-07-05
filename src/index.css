@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@theme {
+/* === Theme Variables and Keyframes (moved from @theme) === */
+:root {
   --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-minecraft: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -20,39 +21,38 @@
 
   --animate-spotlight: spotlight 2s ease .75s 1 forwards;
   --animate-float-duo: float-duo 3s ease-in-out infinite;
-
-  @keyframes spotlight {
-    0% {
-      opacity: 0;
-      transform: translate(-72%, -62%) scale(0.5);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(-50%, -40%) scale(1);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-
-  @keyframes float-duo {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(3deg); }
-  }
-
-  @keyframes pixel-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
   --animate-shadanim: shadanim 15s linear infinite;
+}
 
-  @keyframes shadanim {
-    0% {
-      background-position: 100% -100%;
-    }
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes float-duo {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes pixel-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes shadanim {
+  0% {
+    background-position: 100% -100%;
   }
 }
 
@@ -79,6 +79,38 @@ body {
 html.dark body {
   background-color: #0a0a0a;
   color: #e8e8e8;
+}
+
+html.dark a,
+html.dark .btn-duo {
+  color: #fff;
+}
+
+html.dark .btn-duo {
+  background: #7FE620;
+  border: none;
+}
+
+html.dark .btn-duo:hover {
+  filter: brightness(1.1);
+}
+
+html.dark .btn-21st {
+  background: #7FE620;
+  color: #000;
+  border-color: #fff;
+}
+
+html.dark .btn-21st:hover {
+  filter: brightness(1.1);
+}
+
+html.dark .font-minecraft {
+  color: #fff;
+}
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: #fff;
 }
 
 :where(p, small, label, input, textarea, li, code):not(.font-minecraft) {

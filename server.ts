@@ -147,6 +147,12 @@ async function startServer() {
     res.json({ ok: true });
   });
 
+  // Explicit route for AdMob app-ads.txt to guarantee it always serves as plain text
+  app.get("/app-ads.txt", (_req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.send("google.com, pub-7133828334952044, DIRECT, f08c47fec0942fa0");
+  });
+
   app.get("/api/apk", async (_req, res) => {
     try {
       const latest = await resolveLatestRelease();
@@ -252,7 +258,15 @@ async function startServer() {
     const distPath = __dirname.endsWith(`${path.sep}dist`)
       ? __dirname
       : path.join(__dirname, "dist");
+
+    const dashboardPath = path.join(distPath, "..", "dashboard");
+    app.use("/dashboard", express.static(dashboardPath));
+
     app.use(express.static(distPath));
+
+    app.get("/dashboard*", (req, res) => {
+      res.sendFile(path.join(dashboardPath, "index.html"));
+    });
 
     // SPA fallback
     app.get('*', (req, res) => {

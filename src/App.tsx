@@ -27,10 +27,14 @@ function AppRoutes() {
   );
 }
 
+import { ThemeProvider } from "./lib/ThemeContext";
+
 export default function App() {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </ThemeProvider>
   );
 }

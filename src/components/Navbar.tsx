@@ -66,10 +66,10 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Dark Mode Toggle - Hidden as requested */}
+            {/* Dark Mode Toggle - Visible */}
             <motion.button
               onClick={toggleTheme}
-              className={`hidden relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+              className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-[#7FE620] ${
                 theme === "dark"
                   ? "bg-white/10 hover:bg-white/15 text-yellow-400"
                   : "bg-black/5 hover:bg-black/10 text-gray-700"
@@ -109,7 +109,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             <motion.button
               onClick={toggleTheme}
-              className={`hidden w-9 h-9 rounded-xl flex items-center justify-center ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center border border-transparent focus:outline-none focus:ring-2 focus:ring-[#7FE620] ${
                 theme === "dark"
                   ? "bg-white/10 text-yellow-400"
                   : "bg-black/5 text-gray-700"

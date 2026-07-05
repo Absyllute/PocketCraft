@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Users } from "lucide-react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { useTheme } from "../lib/ThemeContext";
 
 const communityLinks = [
   {
@@ -20,57 +21,24 @@ const communityLinks = [
   },
 ];
 
-const CommunityCard = ({
-  icon: Icon,
-  title,
-  description,
-  url,
-  color,
-  index,
-}: {
-  icon: any;
-  title: string;
-  description: string;
-  url: string;
-  color: string;
-  index: number;
-}) => (
-  <motion.a
-    href={url}
-    target="_blank"
-    rel="noopener noreferrer"
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.5, delay: index * 0.1 }}
-    className="group border-2 border-black/10 rounded-lg p-8 hover:border-[#7FE620] hover:shadow-lg transition-all bg-white block"
-  >
-    <div className="flex items-start gap-4 mb-4">
-      <div
-        className="p-4 rounded-lg"
-        style={{ backgroundColor: color + "20" }}
-      >
-        <Icon size={32} style={{ color }} />
-      </div>
-    </div>
-
-    <h3 className="text-2xl font-bold text-black mb-2 group-hover:text-[#7FE620] transition-colors">
-      {title}
-    </h3>
-    <p className="text-black/70 font-medium leading-relaxed">{description}</p>
-  </motion.a>
-);
-
 export default function Community() {
+  const { theme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen section-transition ${theme === "dark" ? "bg-[#0a0a0a] text-white" : "bg-white text-black"}`}>
       <Navbar />
       {/* Header */}
-      <section className="bg-white border-b-4 border-black/5 py-20 px-6">
+      <section
+        className={`border-b-4 py-20 px-6 section-transition ${
+          theme === "dark" ? "bg-[#0a0a0a] border-white/5" : "bg-white border-black/5"
+        }`}
+      >
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-4">Join the Community</h1>
-            <p className="text-black/60 text-lg max-w-2xl mx-auto">
+            <h1 className={`text-4xl md:text-5xl font-extrabold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+              Join the Community
+            </h1>
+            <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
               Connect with PocketCraft players around the world. Share your servers, get help, and be part of the growing community.
             </p>
           </motion.div>
@@ -80,17 +48,59 @@ export default function Community() {
       {/* Community Links */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          {communityLinks.map((link, index) => (
-            <CommunityCard key={index} {...link} index={index} />
-          ))}
+          {communityLinks.map((link, index) => {
+            const Icon = link.icon;
+
+            return (
+              <motion.a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`group border-2 rounded-lg p-8 hover:border-[#7FE620] transition-all block ${
+                  theme === "dark"
+                    ? "border-white/10 bg-white/[0.02] hover:shadow-[0_20px_80px_rgba(127,230,32,0.08)]"
+                    : "border-black/10 bg-white hover:shadow-lg"
+                }`}
+              >
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className="p-4 rounded-lg"
+                    style={{ backgroundColor: link.color + "20" }}
+                  >
+                    <Icon size={32} style={{ color: link.color }} />
+                  </div>
+                </div>
+
+                <h3 className={`text-2xl font-bold mb-2 group-hover:text-[#7FE620] transition-colors ${
+                  theme === "dark" ? "text-white" : "text-black"
+                }`}>
+                  {link.title}
+                </h3>
+                <p className={`font-medium leading-relaxed ${theme === "dark" ? "text-white/65" : "text-black/70"}`}>
+                  {link.description}
+                </p>
+              </motion.a>
+            );
+          })}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-black/2 border-t-4 border-black/5">
+      <section
+        className={`py-20 px-6 border-t-4 section-transition ${
+          theme === "dark" ? "bg-white/[0.02] border-white/5" : "bg-black/2 border-black/5"
+        }`}
+      >
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-extrabold text-black mb-6">Ready to Join?</h2>
-          <p className="text-black/60 text-lg mb-8">
+          <h2 className={`text-3xl font-extrabold mb-6 ${theme === "dark" ? "text-white" : "text-black"}`}>
+            Ready to Join?
+          </h2>
+          <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
             Jump into Discord and say hello to the PocketCraft community!
           </p>
           <a

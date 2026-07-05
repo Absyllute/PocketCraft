@@ -1,6 +1,5 @@
 'use client'
 
-import PhoneModel from "./PhoneModel";
 import { Spotlight } from "./ui/spotlight"
 
 export function PocketCraftHero() {
@@ -95,7 +94,9 @@ export function PocketCraftHero() {
               {/* Smooth ambient glow behind Steve */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#4CAF50]/10 blur-[80px] rounded-full" />
               <div className="absolute inset-0 flex items-center justify-center top-[-10%] md:top-0">
-                <PhoneModel />
+                <div className="w-48 h-80 bg-black border-4 border-gray-800 rounded-2xl flex items-center justify-center text-white/50 text-xs">
+                  Phone Mockup
+                </div>
               </div>
             </div>
           </div>
@@ -104,5 +105,4 @@ export function PocketCraftHero() {
     </section>
   )
 }
-
 

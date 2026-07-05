@@ -3,24 +3,30 @@ import { motion } from "framer-motion";
 export default function Hero() {
   const apkUrl = "/api/apk/download";
 
+  const { useLowEndDevice } = require("../hooks/useLowEndDevice");
+  const isLowEnd = useLowEndDevice ? useLowEndDevice() : false;
+
   return (
     <section className="pt-40 pb-20 px-6 relative overflow-hidden min-h-[90vh] flex items-center">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#58CC02]/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#1CB0F6]/10 rounded-full blur-[100px]" />
-        
         {/* Floating Pixels */}
-        <motion.div
-          animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/3 left-1/5 w-12 h-12 bg-[#58CC02] rounded-2xl border-b-4 border-[#58A700] shadow-sm"
-        />
-        <motion.div
-          animate={{ y: [0, 30, 0], rotate: [0, -15, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-1/3 right-1/5 w-16 h-16 bg-[#FFC800] rounded-2xl border-b-4 border-[#D9A900] shadow-sm"
-        />
+        {!isLowEnd && (
+          <>
+            <motion.div
+              animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/3 left-1/5 w-12 h-12 bg-[#58CC02] rounded-2xl border-b-4 border-[#58A700] shadow-sm"
+            />
+            <motion.div
+              animate={{ y: [0, 30, 0], rotate: [0, -15, 0] }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute bottom-1/3 right-1/5 w-16 h-16 bg-[#FFC800] rounded-2xl border-b-4 border-[#D9A900] shadow-sm"
+            />
+          </>
+        )}
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10 text-center">

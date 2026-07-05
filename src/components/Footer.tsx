@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Github, Instagram } from "lucide-react";
 import { MINECRAFT_ICONS } from "../lib/minecraft-icons";
 import { useTheme } from "../lib/ThemeContext";
+import { PlayStoreIcon } from "./ui/PlayStoreIcon";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -178,24 +179,21 @@ export default function Footer() {
               Download
             </h4>
             <p className="text-white/30 text-sm mb-4 leading-relaxed">
-              Get PocketCraft on your Android device. Available as APK.
+              Get PocketCraft on your Android device. Available on Google Play.
             </p>
             <motion.a
-              href="/api/apk/download"
-              download
+              href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#7FE620] hover:bg-[#6FD614] text-black text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download APK
+              <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
+              Google Play
             </motion.a>
             <p className="text-white/20 text-[10px] mt-3 uppercase tracking-wider">
-              Stable release • Android 8.0+
+              Official release • Android 8.0+
             </p>
           </motion.div>
         </div>

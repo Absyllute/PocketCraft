@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { MINECRAFT_ICONS } from "../lib/minecraft-icons";
 import { useTheme } from "../lib/ThemeContext";
 import { useLowEndDevice } from "../hooks/useLowEndDevice";
+import { PlayStoreIcon } from "./ui/PlayStoreIcon";
 
 const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
@@ -51,7 +52,7 @@ const FloatingItem = ({
 );
 
 // Sparkle particle component
-const Sparkle = ({ delay, x, y }: { delay: number; x: string; y: string }) => (
+const Sparkle = ({ delay, x, y }: { delay: number; x: string; y: string; key?: any }) => (
   <motion.div
     className="absolute w-1.5 h-1.5 rounded-full bg-[#7FE620]"
     style={{ left: x, top: y }}
@@ -73,9 +74,6 @@ export function ModernHero() {
   const { theme } = useTheme();
   const isLowEnd = useLowEndDevice();
 
-  const scrollToDownload = () => {
-    document.getElementById("download")?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const sparkles = [
     { delay: 0, x: "15%", y: "20%" },
@@ -133,7 +131,7 @@ export function ModernHero() {
       {!isLowEnd && (
         <div className="absolute inset-0 pointer-events-none z-0">
           {sparkles.map((s, i) => (
-            <Sparkle key={i} {...s} />
+            <Sparkle key={i} delay={s.delay} x={s.x} y={s.y} />
           ))}
         </div>
       )}
@@ -271,23 +269,26 @@ export function ModernHero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-4 flex-wrap justify-center"
+          className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md mx-auto sm:max-w-none"
         >
-          <motion.button
-            onClick={scrollToDownload}
-            className="btn-duo px-12 py-4 text-sm uppercase tracking-wider font-bold"
+          <motion.a
+            href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-duo px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            Download APK
-          </motion.button>
+            <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
+            Get it on Google Play
+          </motion.a>
 
           <motion.a
             href="https://discord.com/invite/nc7ceYWVfT"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-10 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm uppercase tracking-wider transition-all rounded-lg shadow-[0_4px_0_0_rgba(88,101,242,0.3)] inline-flex items-center justify-center gap-2"
+            className="px-6 sm:px-10 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-sm uppercase tracking-wider transition-all rounded-lg shadow-[0_4px_0_0_rgba(88,101,242,0.3)] inline-flex items-center justify-center gap-2 w-full sm:w-auto"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400 }}

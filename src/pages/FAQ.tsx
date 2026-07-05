@@ -1,8 +1,9 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { useTheme } from "../lib/ThemeContext";
 
 const faqs = [
   {
@@ -47,54 +48,25 @@ const faqs = [
   },
 ];
 
-const FAQItem = ({ faq, index }: { faq: (typeof faqs)[0]; index: number }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="border-2 border-black/10 rounded-lg overflow-hidden hover:border-[#7FE620] transition-colors"
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-white hover:bg-black/2 transition-colors"
-      >
-        <h3 className="text-lg font-bold text-black text-left">{faq.question}</h3>
-        <ChevronDown
-          size={24}
-          className={`text-[#7FE620] flex-shrink-0 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="px-6 py-4 bg-black/2 border-t-2 border-black/10"
-        >
-          <p className="text-black/70 font-medium leading-relaxed">{faq.answer}</p>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-};
-
 export default function FAQ() {
+  const { theme } = useTheme();
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen section-transition ${theme === "dark" ? "bg-[#0a0a0a] text-white" : "bg-white text-black"}`}>
       <Navbar />
       {/* Header */}
-      <section className="bg-white border-b-4 border-black/5 py-20 px-6">
+      <section
+        className={`border-b-4 py-20 px-6 section-transition ${
+          theme === "dark" ? "bg-[#0a0a0a] border-white/5" : "bg-white border-black/5"
+        }`}
+      >
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-4">Frequently Asked Questions</h1>
-            <p className="text-black/60 text-lg max-w-2xl mx-auto">
+            <h1 className={`text-4xl md:text-5xl font-extrabold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+              Frequently Asked Questions
+            </h1>
+            <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
               Everything you need to know about PocketCraft. Can't find your answer? Reach out on Discord.
             </p>
           </motion.div>
@@ -104,17 +76,70 @@ export default function FAQ() {
       {/* FAQs */}
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto space-y-4">
-          {faqs.map((faq, index) => (
-            <FAQItem key={index} faq={faq} index={index} />
-          ))}
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`border-2 rounded-lg overflow-hidden hover:border-[#7FE620] transition-colors ${
+                  theme === "dark" ? "border-white/10 bg-white/[0.02]" : "border-black/10 bg-white"
+                }`}
+              >
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className={`w-full px-6 py-4 flex items-center justify-between transition-colors ${
+                    theme === "dark" ? "bg-white/[0.02] hover:bg-white/[0.04]" : "bg-white hover:bg-black/2"
+                  }`}
+                >
+                  <h3 className={`text-lg font-bold text-left ${theme === "dark" ? "text-white" : "text-black"}`}>
+                    {faq.question}
+                  </h3>
+                  <ChevronDown
+                    size={24}
+                    className={`text-[#7FE620] flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className={`px-6 py-4 border-t-2 ${
+                        theme === "dark" ? "bg-white/[0.03] border-white/10" : "bg-black/2 border-black/10"
+                      }`}
+                    >
+                      <p className={`font-medium leading-relaxed ${theme === "dark" ? "text-white/65" : "text-black/70"}`}>
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-black/2 border-t-4 border-black/5">
+      <section
+        className={`py-20 px-6 border-t-4 section-transition ${
+          theme === "dark" ? "bg-white/[0.02] border-white/5" : "bg-black/2 border-black/5"
+        }`}
+      >
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-extrabold text-black mb-6">Still have questions?</h2>
-          <p className="text-black/60 text-lg mb-8">Join the Discord community and chat with other players.</p>
+          <h2 className={`text-3xl font-extrabold mb-6 ${theme === "dark" ? "text-white" : "text-black"}`}>
+            Still have questions?
+          </h2>
+          <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
+            Join the Discord community and chat with other players.
+          </p>
           <a
             href="https://discord.com/invite/nc7ceYWVfT"
             target="_blank"

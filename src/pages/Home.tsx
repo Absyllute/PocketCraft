@@ -6,8 +6,8 @@ import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../lib/ThemeContext";
-import { createPortal } from "react-dom";
 import { useLowEndDevice } from "../hooks/useLowEndDevice";
+import { PlayStoreIcon } from "../components/ui/PlayStoreIcon";
 
 const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
@@ -33,30 +33,13 @@ const homeFaqs = [
   },
   {
     question: "Will my world be deleted after an update?",
-    answer: "No. Updating the APK does not remove your worlds. Keep regular backups for safety.",
+    answer: "No. Updating the app does not remove your worlds. Keep regular backups for safety.",
   },
 ];
 
 const Home = () => {
-  const apkUrl = "/api/apk/download";
-  const [showDiscordModal, setShowDiscordModal] = useState(false);
   const { theme } = useTheme();
   const isLowEnd = useLowEndDevice();
-
-  useEffect(() => {
-    if (!showDiscordModal) return;
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [showDiscordModal]);
-
-  const handleApkDownload = () => {
-    setShowDiscordModal(true);
-  };
 
   return (
     <div
@@ -167,7 +150,7 @@ const Home = () => {
               theme === "dark" ? "text-white" : "text-black"
             }`}
           >
-            Download PocketCraft APK
+            Get PocketCraft on Google Play
           </motion.h2>
 
           <motion.p
@@ -179,7 +162,7 @@ const Home = () => {
               theme === "dark" ? "text-white/50" : "text-black/60"
             }`}
           >
-            Tap below to download and install PocketCraft on Android. If your browser blocks the download, open this page in Chrome.
+            Tap below to view PocketCraft on the Google Play Store and install it securely on your Android device.
           </motion.p>
 
           <motion.p
@@ -189,14 +172,14 @@ const Home = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className={`text-sm mb-12 max-w-sm mx-auto ${theme === "dark" ? "text-white/30" : "text-black/50"}`}
           >
-            <strong>Version:</strong> Stable release | <strong>Minimum Android:</strong> 8.0+
+            <strong>Version:</strong> Official Release | <strong>Minimum Android:</strong> 8.0+
           </motion.p>
 
           <motion.a
-            href={apkUrl}
-            download
-            onClick={handleApkDownload}
-            className="btn-duo inline-flex items-center justify-center px-12 py-4 text-sm uppercase tracking-wider font-bold"
+            href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-duo inline-flex items-center justify-center gap-3 px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold w-full sm:w-auto"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -204,7 +187,8 @@ const Home = () => {
             whileHover={isLowEnd ? undefined : { scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}
           >
-            Download APK
+            <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
+            Get it on Google Play
           </motion.a>
 
           <motion.p
@@ -216,73 +200,13 @@ const Home = () => {
               theme === "dark" ? "text-white/20" : "text-black/40"
             }`}
           >
-            After download: open file -&gt; allow unknown apps -&gt; install.
+            Verified and secured by Google Play Protect.
           </motion.p>
 
         </div>
       </section>
 
       <Footer />
-
-      {typeof document !== "undefined" &&
-        createPortal(
-          <AnimatePresence>
-            {showDiscordModal && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-                onClick={(e) => {
-                  if (e.target === e.currentTarget) {
-                    setShowDiscordModal(false);
-                  }
-                }}
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className={`rounded-2xl p-8 max-w-sm mx-auto text-center shadow-2xl ${
-                    theme === "dark" ? "bg-[#1a1a1a] border border-white/10" : "bg-white"
-                  }`}
-                >
-                  <h3 className={`text-2xl font-bold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
-                    Join Our Community!
-                  </h3>
-                  <p className={`mb-6 ${theme === "dark" ? "text-white/50" : "text-black/60"}`}>
-                    Love what we're building? Join thousands of players on Discord for tips, support, and updates.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <motion.a
-                      href="https://discord.com/invite/nc7ceYWVfT"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-duo px-8 py-3 inline-flex items-center justify-center gap-2 font-bold uppercase text-sm"
-                      whileHover={isLowEnd ? undefined : { scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <DiscordIcon className="w-4 h-4" />
-                      Join Discord
-                    </motion.a>
-                    <motion.button
-                      onClick={() => setShowDiscordModal(false)}
-                      className={`px-8 py-3 border-2 rounded-lg transition-colors font-bold uppercase text-sm ${
-                        theme === "dark" ? "border-white/20 hover:bg-white/5 text-white/60" : "border-black/20 hover:bg-black/5"
-                      }`}
-                      whileHover={isLowEnd ? undefined : { scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Maybe Later
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
     </div>
   );
 };

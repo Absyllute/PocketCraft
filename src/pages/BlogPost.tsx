@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { blogPosts } from "../data/blogData";
+import { useTheme } from "../lib/ThemeContext";
 
 const categoryColors: Record<string, string> = {
   Announcement: "#7FE620",
@@ -30,6 +31,7 @@ const renderBoldText = (text: string) => {
 export default function BlogPost() {
   const { id } = useParams<{ id: string }>();
   const post = blogPosts.find((p) => p.id === id);
+  const { theme } = useTheme();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -40,11 +42,15 @@ export default function BlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen section-transition ${theme === "dark" ? "bg-[#0a0a0a] text-white" : "bg-white text-black"}`}>
       <Navbar />
 
       {/* Header */}
-      <section className="bg-white border-b-4 border-black/5 py-12 px-6">
+      <section
+        className={`border-b-4 py-12 px-6 section-transition ${
+          theme === "dark" ? "bg-[#0a0a0a] border-white/5" : "bg-white border-black/5"
+        }`}
+      >
         <div className="max-w-3xl mx-auto">
           <Link
             to="/blog"
@@ -56,7 +62,9 @@ export default function BlogPost() {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-black flex-1">{post.title}</h1>
+              <h1 className={`text-4xl md:text-5xl font-extrabold flex-1 ${theme === "dark" ? "text-white" : "text-black"}`}>
+                {post.title}
+              </h1>
               <span
                 className="px-4 py-2 rounded-full text-xs font-bold text-white flex-shrink-0"
                 style={{ backgroundColor: categoryColors[post.category] || "#7FE620" }}
@@ -64,7 +72,9 @@ export default function BlogPost() {
                 {post.category}
               </span>
             </div>
-            <p className="text-black/50 font-medium text-lg">{post.date}</p>
+            <p className={`font-medium text-lg ${theme === "dark" ? "text-white/35" : "text-black/50"}`}>
+              {post.date}
+            </p>
           </motion.div>
         </div>
       </section>
@@ -76,13 +86,13 @@ export default function BlogPost() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-black/70 font-medium leading-relaxed space-y-6"
+            className={`font-medium leading-relaxed space-y-6 ${theme === "dark" ? "text-white/65" : "text-black/70"}`}
           >
             {post.content.split("\n\n").map((paragraph, idx) => {
               // Headers
               if (paragraph.startsWith("## ")) {
                 return (
-                  <h2 key={idx} className="text-3xl font-bold text-black mt-8 mb-4">
+                  <h2 key={idx} className={`text-3xl font-bold mt-8 mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
                     {paragraph.substring(3)}
                   </h2>
                 );
@@ -96,7 +106,7 @@ export default function BlogPost() {
                     {items.map((item, i) => {
                       const content = item.replace(/^\d+\.\s/, "");
                       return (
-                        <li key={i} className="text-black/70 font-medium">
+                        <li key={i} className={theme === "dark" ? "text-white/65 font-medium" : "text-black/70 font-medium"}>
                           {renderBoldText(content)}
                         </li>
                       );
@@ -113,7 +123,7 @@ export default function BlogPost() {
                     {items.map((item, i) => {
                       const content = item.substring(2);
                       return (
-                        <li key={i} className="list-disc text-black/70 font-medium">
+                        <li key={i} className={theme === "dark" ? "list-disc text-white/65 font-medium" : "list-disc text-black/70 font-medium"}>
                           {renderBoldText(content)}
                         </li>
                       );
@@ -125,7 +135,7 @@ export default function BlogPost() {
               // Regular paragraphs with bold text support
               if (paragraph.trim()) {
                 return (
-                  <p key={idx} className="text-black/70 font-medium leading-relaxed">
+                  <p key={idx} className={theme === "dark" ? "text-white/65 font-medium leading-relaxed" : "text-black/70 font-medium leading-relaxed"}>
                     {renderBoldText(paragraph)}
                   </p>
                 );
@@ -138,9 +148,13 @@ export default function BlogPost() {
       </section>
 
       {/* Related Posts */}
-      <section className="py-20 px-6 bg-black/2 border-t-4 border-black/5">
+      <section
+        className={`py-20 px-6 border-t-4 section-transition ${
+          theme === "dark" ? "bg-white/[0.02] border-white/5" : "bg-black/2 border-black/5"
+        }`}
+      >
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-black mb-8">More Articles</h2>
+          <h2 className={`text-3xl font-bold mb-8 ${theme === "dark" ? "text-white" : "text-black"}`}>More Articles</h2>
           <div className="grid grid-cols-1 gap-6">
             {blogPosts
               .filter((p) => p.id !== id)
@@ -155,10 +169,16 @@ export default function BlogPost() {
                 >
                   <Link
                     to={`/blog/${relatedPost.id}`}
-                    className="block border-2 border-black/10 rounded-lg p-6 hover:border-[#7FE620] hover:shadow-lg transition-all group"
+                    className={`block border-2 rounded-lg p-6 hover:border-[#7FE620] transition-all group ${
+                      theme === "dark"
+                        ? "border-white/10 bg-white/[0.02] hover:shadow-[0_20px_80px_rgba(127,230,32,0.08)]"
+                        : "border-black/10 bg-white hover:shadow-lg"
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-xl font-bold text-black group-hover:text-[#7FE620] transition-colors flex-1">
+                      <h3 className={`text-xl font-bold group-hover:text-[#7FE620] transition-colors flex-1 ${
+                        theme === "dark" ? "text-white" : "text-black"
+                      }`}>
                         {relatedPost.title}
                       </h3>
                       <span
@@ -168,8 +188,12 @@ export default function BlogPost() {
                         {relatedPost.category}
                       </span>
                     </div>
-                    <p className="text-black/50 text-sm font-medium mt-2 mb-3">{relatedPost.date}</p>
-                    <p className="text-black/70 font-medium">{relatedPost.excerpt}</p>
+                    <p className={`text-sm font-medium mt-2 mb-3 ${theme === "dark" ? "text-white/35" : "text-black/50"}`}>
+                      {relatedPost.date}
+                    </p>
+                    <p className={theme === "dark" ? "text-white/65 font-medium" : "text-black/70 font-medium"}>
+                      {relatedPost.excerpt}
+                    </p>
                   </Link>
                 </motion.div>
               ))}

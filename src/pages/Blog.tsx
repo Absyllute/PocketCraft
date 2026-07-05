@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { blogPosts } from "../data/blogData";
+import { useTheme } from "../lib/ThemeContext";
 
 const categoryColors: Record<string, string> = {
   Announcement: "#7FE620",
@@ -11,15 +12,23 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function Blog() {
+  const { theme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen section-transition ${theme === "dark" ? "bg-[#0a0a0a] text-white" : "bg-white text-black"}`}>
       <Navbar />
       {/* Header */}
-      <section className="bg-white border-b-4 border-black/5 py-20 px-6">
+      <section
+        className={`border-b-4 py-20 px-6 section-transition ${
+          theme === "dark" ? "bg-[#0a0a0a] border-white/5" : "bg-white border-black/5"
+        }`}
+      >
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-4">Blog</h1>
-            <p className="text-black/60 text-lg max-w-2xl mx-auto">
+            <h1 className={`text-4xl md:text-5xl font-extrabold mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}>
+              Blog
+            </h1>
+            <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
               Latest updates, guides, and news about PocketCraft.
             </p>
           </motion.div>
@@ -39,10 +48,16 @@ export default function Blog() {
             >
               <Link
                 to={`/blog/${post.id}`}
-                className="block border-2 border-black/10 rounded-lg p-6 hover:border-[#7FE620] hover:shadow-lg transition-all group cursor-pointer"
+                className={`block border-2 rounded-lg p-6 hover:border-[#7FE620] transition-all group cursor-pointer ${
+                  theme === "dark"
+                    ? "border-white/10 bg-white/[0.02] hover:shadow-[0_20px_80px_rgba(127,230,32,0.08)]"
+                    : "border-black/10 bg-white hover:shadow-lg"
+                }`}
               >
                 <div className="flex items-start justify-between gap-4 mb-3">
-                  <h2 className="text-2xl font-bold text-black group-hover:text-[#7FE620] transition-colors flex-1">
+                  <h2 className={`text-2xl font-bold group-hover:text-[#7FE620] transition-colors flex-1 ${
+                    theme === "dark" ? "text-white" : "text-black"
+                  }`}>
                     {post.title}
                   </h2>
                   <span
@@ -53,8 +68,12 @@ export default function Blog() {
                   </span>
                 </div>
 
-                <p className="text-black/50 text-sm font-medium mb-3">{post.date}</p>
-                <p className="text-black/70 font-medium leading-relaxed">{post.excerpt}</p>
+                <p className={`text-sm font-medium mb-3 ${theme === "dark" ? "text-white/35" : "text-black/50"}`}>
+                  {post.date}
+                </p>
+                <p className={`font-medium leading-relaxed ${theme === "dark" ? "text-white/65" : "text-black/70"}`}>
+                  {post.excerpt}
+                </p>
 
                 <div className="mt-4">
                   <span className="text-[#7FE620] font-bold text-sm uppercase tracking-wider group-hover:gap-2">
@@ -68,10 +87,16 @@ export default function Blog() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-black/2 border-t-4 border-black/5">
+      <section
+        className={`py-20 px-6 border-t-4 section-transition ${
+          theme === "dark" ? "bg-white/[0.02] border-white/5" : "bg-black/2 border-black/5"
+        }`}
+      >
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-extrabold text-black mb-6">Stay Updated</h2>
-          <p className="text-black/60 text-lg mb-8">
+          <h2 className={`text-3xl font-extrabold mb-6 ${theme === "dark" ? "text-white" : "text-black"}`}>
+            Stay Updated
+          </h2>
+          <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
             Follow my Discord and Instagram for the latest news about PocketCraft.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
