@@ -310,6 +310,25 @@ function DashboardPage({
   const [dashboardSecret, setDashboardSecret] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
+  // Real-time Player Stats States
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [playerStats, setPlayerStats] = useState<{
+    pos?: string;
+    dimension?: string;
+    health?: string;
+    xp?: string;
+    deathPos?: string;
+    deathDim?: string;
+  } | null>(null);
+
+  // AFK Bot Spawn Form States
+  const [botName, setBotName] = useState('');
+  const [botX, setBotX] = useState('');
+  const [botY, setBotY] = useState('64');
+  const [botZ, setBotZ] = useState('');
+  const [botOwner, setBotOwner] = useState('');
+  const [botSpawning, setBotSpawning] = useState(false);
+
   // Command Pending States
   const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
 
@@ -358,6 +377,127 @@ function DashboardPage({
       unsubscribeUser();
     };
   }, [user.uid]);
+
+  const fetchPlayerStats = async (playerName: string) => {
+    setStatsLoading(true);
+    setPlayerStats(null);
+    try {
+      const posRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Pos` });
+      const dimRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Dimension` });
+      const hpRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Health` });
+      const xpRes = await dispatchCommand('rcon', { command: `xp query "${playerName}" levels` });
+      const deathRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" LastDeathLocation` });
+
+      const posMatches = posRes.match(/[-+]?[0-9]*\.?[0-9]+/g);
+      const parsedPos = posMatches && posMatches.length >= 3 
+        ? `X: ${Math.round(parseFloat(posMatches[0]))}, Y: ${Math.round(parseFloat(posMatches[1]))}, Z: ${Math.round(parseFloat(posMatches[2]))}`
+        : 'Unknown';
+
+      const parsedDim = dimRes.includes('the_nether') ? 'The Nether' 
+        : dimRes.includes('the_end') ? 'The End' 
+        : 'Overworld';
+
+      const hpMatch = hpRes.match(/[0-9.]+/);
+      const parsedHp = hpMatch ? `${Math.round(parseFloat(hpMatch[0]))} / 20` : 'Unknown';
+
+      const xpMatch = xpRes.match(/has (\d+) experience/i) || xpRes.match(/(\d+)/);
+      const parsedXp = xpMatch ? xpMatch[1] : '0';
+
+      let deathPos = '';
+      let deathDim = '';
+      if (deathRes && !deathRes.includes('No data found')) {
+        const deathMatches = deathRes.match(/[-+]?\d+/g);
+        if (deathMatches && deathMatches.length >= 3) {
+          const numbers = deathMatches.map(Number).filter(n => !isNaN(n));
+          const coords = numbers.length > 3 ? numbers.slice(1, 4) : numbers.slice(0, 3);
+          deathPos = `${coords[0]} ${coords[1]} ${coords[2]}`;
+        }
+        deathDim = deathRes.includes('the_nether') ? 'minecraft:the_nether'
+          : deathRes.includes('the_end') ? 'minecraft:the_end'
+          : 'minecraft:overworld';
+      }
+
+      setPlayerStats({
+        pos: parsedPos,
+        dimension: parsedDim,
+        health: parsedHp,
+        xp: parsedXp,
+        deathPos: deathPos || undefined,
+        deathDim: deathDim || undefined
+      });
+    } catch (e) {
+      console.error(e);
+      showToast('error', 'Failed to fetch player stats.');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPlayer) {
+      fetchPlayerStats(selectedPlayer.name);
+    } else {
+      setPlayerStats(null);
+    }
+  }, [selectedPlayer]);
+
+  const handleSpawnBot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const currentStatus = status;
+    if (!currentStatus || !phoneOnline || !currentStatus.serverRunning || botSpawning) return;
+
+    const name = botName.trim().replace(/[^a-zA-Z0-9_]/g, '');
+    if (!name) {
+      showToast('error', 'Please enter a valid bot name (letters/numbers/underscores only).');
+      return;
+    }
+
+    const xVal = parseInt(botX);
+    const yVal = parseInt(botY);
+    const zVal = parseInt(botZ);
+    if (isNaN(xVal) || isNaN(yVal) || isNaN(zVal)) {
+      showToast('error', 'Coordinates must be valid numbers.');
+      return;
+    }
+
+    const owner = currentStatus.playersOnline.find(p => p.name === botOwner);
+    if (!owner) {
+      showToast('error', 'Please select an online player to act as owner.');
+      return;
+    }
+
+    setBotSpawning(true);
+    try {
+      await dispatchCommand('rcon', { command: `forceload add ${xVal} ${zVal}` });
+      const spawnRes = await dispatchCommand('rcon', { 
+        command: `dummy create "${name}" ${owner.uuid} world ${xVal} ${yVal} ${zVal}` 
+      });
+      await dispatchCommand('rcon', { command: `forceload remove ${xVal} ${zVal}` });
+
+      if (spawnRes.includes('Created dummy') || spawnRes.includes('success') || !spawnRes.includes('failed')) {
+        showToast('success', `AFK Bot AFK_${name} spawned successfully!`);
+        setBotName('');
+        setBotX('');
+        setBotZ('');
+      } else {
+        showToast('error', spawnRes || 'Failed to spawn AFK bot.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to spawn AFK bot.');
+    } finally {
+      setBotSpawning(false);
+    }
+  };
+
+  const handleDespawnBot = async (botName: string) => {
+    try {
+      await dispatchCommand('rcon', { command: `kick "${botName}"` });
+      await dispatchCommand('rcon', { command: `kill @a[name="${botName}",limit=1]` });
+      showToast('success', `Despawned AFK bot ${botName}`);
+    } catch (err: any) {
+      showToast('error', 'Failed to despawn bot.');
+    }
+  };
 
   // Heartbeat loop check (Phone offline if now - lastSeen > 30s)
   useEffect(() => {
@@ -550,72 +690,164 @@ function DashboardPage({
         </div>
 
         {/* AFK Helper Card */}
-        <div className="panel-card col-span-5">
-          <h2 className="card-title"><BotIcon /> AFK Helper Bots</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
-            Spawn dummy players in-game to keep chunks loaded and farm operations active.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '14px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
-            <div>
-              <p style={{ fontWeight: '700', fontSize: '14px' }}>All AFK Bots</p>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status on active world</p>
-            </div>
-            <label className="switch">
-              <input 
-                type="checkbox" 
-                checked={status.afkBotEnabled} 
-                onChange={(e) => handleAction('toggle_afk_bot', { enabled: e.target.checked }, `AFK bot status set to ${e.target.checked}`)}
-                disabled={!phoneOnline || !status.serverRunning || pendingActions[`toggle_afk_bot_${JSON.stringify({ enabled: !status.afkBotEnabled })}`]}
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
-        </div>
+        {(() => {
+          const activeBots = status.playersOnline.filter(p => p.name.startsWith('AFK_'));
+          const normalPlayers = status.playersOnline.filter(p => !p.name.startsWith('AFK_'));
+          
+          return (
+            <>
+              <div className="panel-card col-span-5">
+                <h2 className="card-title"><BotIcon /> AFK Bots Manager</h2>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+                  Spawn persistent dummy players to keep chunks loaded and farm systems active.
+                </p>
 
-        {/* Players Online Card */}
-        <div className="panel-card col-span-6">
-          <h2 className="card-title"><UsersIcon /> Players Online ({status.playersOnline.length})</h2>
-          <div className="player-list">
-            {status.playersOnline.length === 0 ? (
-              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
-                No players currently connected.
-              </div>
-            ) : (
-              status.playersOnline.map(p => (
-                <div key={p.uuid || p.name} className="player-item">
-                  <div className="player-name-wrapper" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(p)}>
-                    <span className="player-name">{p.name}</span>
-                    <span className={`player-badge ${p.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
-                      {p.name.startsWith('.') ? 'Bedrock' : 'Java'}
-                    </span>
+                {/* Form to spawn a new AFK bot */}
+                <form onSubmit={handleSpawnBot} className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px', marginBottom: '16px', border: '1px solid var(--neutral-border)' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Spawn AFK Bot</span>
+                  
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Bot Name (e.g. IronFarm)" 
+                    value={botName}
+                    onChange={(e) => setBotName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                    disabled={botSpawning || !phoneOnline || !status.serverRunning}
+                    required
+                    style={{ padding: '8px 12px', fontSize: '13px' }}
+                  />
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="X" 
+                      value={botX}
+                      onChange={(e) => setBotX(e.target.value.replace(/[^0-9-]/g, ''))}
+                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
+                      required
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Y" 
+                      value={botY}
+                      onChange={(e) => setBotY(e.target.value.replace(/[^0-9-]/g, ''))}
+                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
+                      required
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                    />
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Z" 
+                      value={botZ}
+                      onChange={(e) => setBotZ(e.target.value.replace(/[^0-9-]/g, ''))}
+                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
+                      required
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                    />
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                      onClick={() => handleAction('kick', { playerName: p.name }, `Kicked player ${p.name}`)}
-                      disabled={!phoneOnline || !status.serverRunning}
-                    >
-                      Kick
-                    </button>
-                    <button 
-                      className="btn btn-danger" 
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                      onClick={() => triggerConfirm(
-                        'Ban Player',
-                        `Are you sure you want to permanently ban player ${p.name} from the server?`,
-                        () => handleAction('ban', { playerName: p.name }, `Banned player ${p.name}`)
-                      )}
-                      disabled={!phoneOnline || !status.serverRunning}
-                    >
-                      Ban
-                    </button>
-                  </div>
+
+                  <select 
+                    className="form-control" 
+                    value={botOwner}
+                    onChange={(e) => setBotOwner(e.target.value)}
+                    disabled={botSpawning || !phoneOnline || !status.serverRunning}
+                    required
+                    style={{ padding: '8px', fontSize: '13px', background: '#06070a' }}
+                  >
+                    <option value="" disabled>Select Owner (Online Player)...</option>
+                    {normalPlayers.map(p => (
+                      <option key={p.name} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={botSpawning || !phoneOnline || !status.serverRunning || !botOwner}
+                    style={{ padding: '10px', fontSize: '13px' }}
+                  >
+                    {botSpawning ? 'Spawning Bot...' : 'Spawn Bot'}
+                  </button>
+                </form>
+
+                {/* List of active AFK bots */}
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Active AFK Bots ({activeBots.length})</span>
+                  {activeBots.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '10px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
+                      No active bots.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                      {activeBots.map(bot => (
+                        <div key={bot.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{bot.name}</span>
+                          <button 
+                            className="btn btn-danger" 
+                            style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
+                            onClick={() => handleDespawnBot(bot.name)}
+                            disabled={!phoneOnline || !status.serverRunning}
+                          >
+                            Despawn
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              </div>
+
+              {/* Players Online Card */}
+              <div className="panel-card col-span-6">
+                <h2 className="card-title"><UsersIcon /> Players Online ({normalPlayers.length})</h2>
+                <div className="player-list">
+                  {normalPlayers.length === 0 ? (
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
+                      No players currently connected.
+                    </div>
+                  ) : (
+                    normalPlayers.map(p => (
+                      <div key={p.uuid || p.name} className="player-item">
+                        <div className="player-name-wrapper" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(p)}>
+                          <span className="player-name">{p.name}</span>
+                          <span className={`player-badge ${p.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
+                            {p.name.startsWith('.') ? 'Bedrock' : 'Java'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                            onClick={() => handleAction('kick', { playerName: p.name }, `Kicked player ${p.name}`)}
+                            disabled={!phoneOnline || !status.serverRunning}
+                          >
+                            Kick
+                          </button>
+                          <button 
+                            className="btn btn-danger" 
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                            onClick={() => triggerConfirm(
+                              'Ban Player',
+                              `Are you sure you want to permanently ban player ${p.name} from the server?`,
+                              () => handleAction('ban', { playerName: p.name }, `Banned player ${p.name}`)
+                            )}
+                            disabled={!phoneOnline || !status.serverRunning}
+                          >
+                            Ban
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* Whitelist Card */}
         <WhitelistCardComponent 
@@ -685,6 +917,65 @@ function DashboardPage({
                 </span>
               </div>
             </div>
+
+            {/* Real-time Stats scanner */}
+            {selectedPlayer && (
+              <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Player Stats</label>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '4px 8px', fontSize: '10px', boxShadow: 'none' }}
+                    onClick={() => fetchPlayerStats(selectedPlayer.name)}
+                    disabled={statsLoading}
+                  >
+                    Refresh Stats
+                  </button>
+                </div>
+                
+                {statsLoading ? (
+                  <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Scanning player data...
+                  </div>
+                ) : playerStats ? (
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px', border: '1px solid var(--neutral-border)', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Location:</span>
+                      <span style={{ fontWeight: 'bold' }}>{playerStats.pos}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Dimension:</span>
+                      <span style={{ fontWeight: 'bold' }}>{playerStats.dimension}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Health:</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--danger-color)' }}>❤ {playerStats.health}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>XP Levels:</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--success-color)' }}>✨ {playerStats.xp}</span>
+                    </div>
+                    {playerStats.deathPos && (
+                      <div style={{ borderTop: '1px solid var(--neutral-border)', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Last Death:</span>
+                        <button 
+                          className="btn btn-warning" 
+                          style={{ padding: '4px 8px', fontSize: '10px', boxShadow: 'none' }}
+                          onClick={() => handleAction('rcon', { command: `execute in ${playerStats.deathDim} run tp "${selectedPlayer.name}" ${playerStats.deathPos}` }, `Teleported ${selectedPlayer.name} to last death location.`)}
+                          disabled={!phoneOnline || !status.serverRunning}
+                        >
+                          TP to Death Location
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    No stats cached. Refresh to scan.
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Player UUID</label>
@@ -759,6 +1050,53 @@ function DashboardPage({
                 >
                   Ban Player
                 </button>
+              </div>
+            </div>
+
+            {/* Teleportation Controls */}
+            <div style={{ textAlign: 'left', marginTop: '18px', paddingTop: '18px', borderTop: '1px solid var(--neutral-border)' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Teleport Commands</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '12px', padding: '10px' }}
+                  onClick={() => handleAction('rcon', { command: `tp "${selectedPlayer.name}" 0 80 0` }, `Teleported ${selectedPlayer.name} to spawn.`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                >
+                  Teleport to Spawn
+                </button>
+                
+                {/* TP to Player dropdown */}
+                {status.playersOnline.filter(p => p.name !== selectedPlayer.name).length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <select 
+                      id="tpTargetPlayer" 
+                      className="form-control" 
+                      style={{ flex: 1, padding: '8px', fontSize: '12px', background: '#06070a' }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select target...</option>
+                      {status.playersOnline
+                        .filter(p => p.name !== selectedPlayer.name)
+                        .map(p => (
+                          <option key={p.name} value={p.name}>{p.name}</option>
+                        ))}
+                    </select>
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ fontSize: '12px', padding: '8px 12px' }}
+                      onClick={() => {
+                        const sel = document.getElementById('tpTargetPlayer') as HTMLSelectElement;
+                        if (sel.value) {
+                          handleAction('rcon', { command: `tp "${selectedPlayer.name}" "${sel.value}"` }, `Teleported ${selectedPlayer.name} to ${sel.value}`);
+                        }
+                      }}
+                      disabled={!phoneOnline || !status.serverRunning}
+                    >
+                      TP to Player
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -929,7 +1267,7 @@ function WhitelistCardComponent({
   );
 }
 
-// --- Custom Subdomain Card Sub-component ---
+// --- Custom IP Card Sub-component ---
 function SubdomainCardComponent({
   currentSubdomain,
   proUser,
@@ -963,9 +1301,9 @@ function SubdomainCardComponent({
     setSaving(true);
     try {
       await onDispatch('set_subdomain', { subdomain: val });
-      showToast('success', 'Custom subdomain updated! Restart server to apply.');
+      showToast('success', 'Custom IP updated! Restart server to apply.');
     } catch (e: any) {
-      showToast('error', e.message || 'Could not update subdomain.');
+      showToast('error', e.message || 'Could not update Custom IP.');
     } finally {
       setSaving(false);
     }
@@ -973,12 +1311,12 @@ function SubdomainCardComponent({
 
   return (
     <div className="panel-card col-span-5">
-      <h2 className="card-title"><GlobeIcon /> Custom IP Subdomain</h2>
+      <h2 className="card-title"><GlobeIcon /> Custom IP</h2>
       
       {!proUser ? (
         <div style={{ textAlign: 'center', padding: '10px' }}>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-            Custom subdomain customization requires a Pro or Member tier.
+            Custom IP customization requires a Pro or Member tier.
           </p>
           <div className="status-pill status-offline" style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '11px' }}>
             🔒 Feature Locked
@@ -987,13 +1325,13 @@ function SubdomainCardComponent({
       ) : (
         <form onSubmit={handleSave} className="form-group">
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-            Customize your relay routing IP (e.g. `yourname.as.pocketcraft.online`).
+            Customize your relay routing IP (e.g. `yourname.pocketcraft.online`).
           </p>
           <div style={{ display: 'flex', gap: '10px' }}>
             <input 
               type="text" 
               className="form-control" 
-              placeholder="subdomain" 
+              placeholder="custom-ip" 
               value={subdomainInput}
               onChange={(e) => setSubdomainInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
               disabled={saving || !phoneOnline}
@@ -1008,7 +1346,7 @@ function SubdomainCardComponent({
             </button>
           </div>
           <p className="helper-text">
-            Current IP: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-color)' }}>
+            Current Custom IP: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-color)' }}>
               {currentSubdomain ? `${currentSubdomain}.pocketcraft.online` : 'None'}
             </code>
           </p>
