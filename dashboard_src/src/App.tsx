@@ -107,6 +107,7 @@ interface DashboardStatus {
     maxPlayers?: string;
     viewDistance?: string;
     allowNether?: string;
+    whiteList?: string;
   };
 }
 
@@ -671,17 +672,44 @@ function DashboardPage({
             <div style={{ marginTop: '0px', marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid var(--neutral-border)' }}>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Connection Endpoints</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>🌐 Public Custom IP</p>
-                  <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>
-                    {status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'No subdomain set'}
-                  </code>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>🌐 Public Custom IP</p>
+                    <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>
+                      {status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'No subdomain set'}
+                    </code>
+                  </div>
+                  {status.subdomain && (
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${status.subdomain}.pocketcraft.online`);
+                        showToast('success', 'Public Custom IP copied!');
+                      }}
+                    >
+                      Copy
+                    </button>
+                  )}
                 </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>📶 Local Network IP</p>
-                  <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>
-                    {status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565'}
-                  </code>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>📶 Local Network IP</p>
+                    <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>
+                      {status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565'}
+                    </code>
+                  </div>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => {
+                      const ipStr = status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565';
+                      navigator.clipboard.writeText(ipStr);
+                      showToast('success', 'Local Network IP copied!');
+                    }}
+                  >
+                    Copy
+                  </button>
                 </div>
               </div>
             </div>
@@ -913,37 +941,159 @@ function DashboardPage({
         {/* Server Settings Card */}
         {status.properties && (
           <div className="panel-card col-span-7">
-            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Configuration</h2>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Settings & World Rules</h2>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-              Active server properties loaded from configuration.
+              Configure game difficulty, default modes, rendering distances, and active gamerules via RCON.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+              
+              {/* Difficulty Dropdown */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Difficulty:</span>
-                <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{status.properties.difficulty || 'normal'}</span>
+                <select 
+                  value={status.properties.difficulty || 'normal'}
+                  onChange={(e) => handleAction('rcon', { command: `difficulty ${e.target.value}` }, `Server difficulty changed to ${e.target.value}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                >
+                  <option value="peaceful">Peaceful</option>
+                  <option value="easy">Easy</option>
+                  <option value="normal">Normal</option>
+                  <option value="hard">Hard</option>
+                </select>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Default Mode:</span>
-                <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{status.properties.gamemode || 'survival'}</span>
+
+              {/* Default Gamemode Dropdown */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Gamemode:</span>
+                <select 
+                  value={status.properties.gamemode || 'survival'}
+                  onChange={(e) => handleAction('rcon', { command: `defaultgamemode ${e.target.value}` }, `Default gamemode changed to ${e.target.value}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                >
+                  <option value="survival">Survival</option>
+                  <option value="creative">Creative</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="spectator">Spectator</option>
+                </select>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>PVP Combat:</span>
-                <span style={{ fontWeight: 'bold', color: status.properties.pvp === 'true' ? 'var(--success-color)' : 'var(--text-secondary)' }}>
-                  {status.properties.pvp === 'true' ? 'Enabled' : 'Disabled'}
-                </span>
+
+              {/* Whitelist Toggle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Whitelist:</span>
+                <select 
+                  value={status.properties.whiteList === 'true' ? 'true' : 'false'}
+                  onChange={(e) => handleAction('rcon', { command: e.target.value === 'true' ? 'whitelist on' : 'whitelist off' }, `Whitelist set to ${e.target.value === 'true' ? 'Enabled' : 'Disabled'}`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                >
+                  <option value="false">Disabled</option>
+                  <option value="true">Enabled</option>
+                </select>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Max Players:</span>
-                <span style={{ fontWeight: 'bold' }}>{status.properties.maxPlayers || '10'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+
+              {/* View Distance Dropdown */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Render Distance:</span>
-                <span style={{ fontWeight: 'bold' }}>{status.properties.viewDistance || '10'} chunks</span>
+                <select 
+                  value={status.properties.viewDistance || '10'}
+                  onChange={(e) => handleAction('rcon', { command: `view-distance ${e.target.value}` }, `Render distance changed to ${e.target.value} chunks`)}
+                  disabled={!phoneOnline || !status.serverRunning}
+                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                >
+                  <option value="4">4 chunks</option>
+                  <option value="6">6 chunks</option>
+                  <option value="8">8 chunks</option>
+                  <option value="10">10 chunks</option>
+                  <option value="12">12 chunks</option>
+                  <option value="16">16 chunks</option>
+                </select>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Nether Dimension:</span>
-                <span style={{ fontWeight: 'bold' }}>{status.properties.allowNether === 'true' ? 'Allowed' : 'Disabled'}</span>
+
+              {/* Gamerules Section (Keep Inventory, Daylight Cycle, Mob Griefing) */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Keep Inventory:</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule keepInventory true' }, 'Gamerule keepInventory set to true')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    ON
+                  </button>
+                  <button 
+                    className="btn btn-danger" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule keepInventory false' }, 'Gamerule keepInventory set to false')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    OFF
+                  </button>
+                </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Daylight Cycle:</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule doDaylightCycle true' }, 'Gamerule doDaylightCycle set to true')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    ON
+                  </button>
+                  <button 
+                    className="btn btn-danger" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule doDaylightCycle false' }, 'Gamerule doDaylightCycle set to false')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    OFF
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Mob Griefing:</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule mobGriefing true' }, 'Gamerule mobGriefing set to true')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    ON
+                  </button>
+                  <button 
+                    className="btn btn-danger" 
+                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
+                    onClick={() => handleAction('rcon', { command: 'gamerule mobGriefing false' }, 'Gamerule mobGriefing set to false')}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    OFF
+                  </button>
+                </div>
+              </div>
+
+              {/* Read-only properties (PVP, Max Players, Nether) */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>PVP Combat:</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.pvp === 'true' ? 'Enabled' : 'Disabled'}</span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Max Players Limit:</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.maxPlayers || '10'}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Nether Dimension:</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.allowNether === 'true' ? 'Allowed' : 'Disabled'}</span>
+              </div>
+
             </div>
           </div>
         )}
