@@ -726,7 +726,7 @@ function DashboardPage({
                       onChange={(e) => setBotX(e.target.value.replace(/[^0-9-]/g, ''))}
                       disabled={botSpawning || !phoneOnline || !status.serverRunning}
                       required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
                     />
                     <input 
                       type="text" 
@@ -736,7 +736,7 @@ function DashboardPage({
                       onChange={(e) => setBotY(e.target.value.replace(/[^0-9-]/g, ''))}
                       disabled={botSpawning || !phoneOnline || !status.serverRunning}
                       required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
                     />
                     <input 
                       type="text" 
@@ -746,7 +746,7 @@ function DashboardPage({
                       onChange={(e) => setBotZ(e.target.value.replace(/[^0-9-]/g, ''))}
                       disabled={botSpawning || !phoneOnline || !status.serverRunning}
                       required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, textAlign: 'center' }}
+                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
                     />
                   </div>
 
