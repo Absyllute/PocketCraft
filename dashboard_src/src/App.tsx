@@ -483,7 +483,7 @@ function DashboardPage({
       {/* Grid Layout */}
       <div className="dashboard-grid">
         {/* Server Control Card */}
-        <div className="panel-card col-span-7">
+        <div className="panel-card green-theme col-span-7">
           <h2 className="card-title"><ServerIcon /> Server Control</h2>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
             <div>
