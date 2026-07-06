@@ -1031,12 +1031,16 @@ function DashboardPage({
         />
 
         {/* Server Settings Card */}
-        {status.properties && (
-          <div className="panel-card col-span-7">
-            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Settings & World Rules</h2>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-              Configure game difficulty, default modes, rendering distances, and active gamerules via RCON.
-            </p>
+        <div className="panel-card col-span-7">
+          <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Settings & World Rules</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+            Configure game difficulty, default modes, rendering distances, and active gamerules via RCON.
+          </p>
+          {!status.properties ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '13px', border: '1px dashed var(--neutral-border)' }}>
+              Waiting for server configurations to be uploaded from the app...
+            </div>
+          ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
               
               {/* Difficulty Dropdown */}
@@ -1187,8 +1191,8 @@ function DashboardPage({
               </div>
 
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Confirmation Modal */}
