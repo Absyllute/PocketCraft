@@ -89,12 +89,26 @@ interface Player {
   uuid: string;
 }
 
+interface SavedAfkBot {
+  id: number;
+  name: string;
+  dummyName: string;
+  x: number;
+  y: number;
+  z: number;
+  world: string;
+  active: boolean;
+  owner: string;
+  ownerUuid: string;
+}
+
 interface DashboardStatus {
   serverRunning: boolean;
   playersOnline: Player[];
   uptimeSeconds: number;
   tps: number | null;
   afkBotEnabled: boolean;
+  afkBots?: SavedAfkBot[];
   subdomain: string | null;
   whitelist: string[];
   lastSeen: Timestamp;
@@ -517,6 +531,17 @@ function DashboardPage({
     }
   };
 
+  const handleQuickSpawnSavedBot = async (name: string, ownerUuid: string, x: number, y: number, z: number) => {
+    try {
+      await dispatchCommand('rcon', { command: `forceload add ${x} ${z}` });
+      await dispatchCommand('rcon', { command: `dummy create "${name}" ${ownerUuid} world ${x} ${y} ${z}` });
+      await dispatchCommand('rcon', { command: `forceload remove ${x} ${z}` });
+      showToast('success', `Spawned saved bot AFK_${name}`);
+    } catch (err: any) {
+      showToast('error', 'Failed to spawn saved bot.');
+    }
+  };
+
   // Heartbeat loop check (Phone offline if now - lastSeen > 30s)
   useEffect(() => {
     if (!status) {
@@ -756,9 +781,52 @@ function DashboardPage({
 
         {/* AFK Helper Card */}
         {(() => {
-          const activeBots = status.playersOnline.filter(p => p.name.startsWith('AFK_'));
+          const rawAfkBots = status.afkBots || [];
+          const activeOnlineBots = status.playersOnline.filter(p => p.name.startsWith('AFK_'));
           const normalPlayers = status.playersOnline.filter(p => !p.name.startsWith('AFK_'));
-          
+
+          // Merge saved database bots and currently online AFK bots
+          const allBotsMap = new Map<string, {
+            name: string;
+            dummyName: string;
+            x?: number;
+            y?: number;
+            z?: number;
+            active: boolean;
+            owner?: string;
+            ownerUuid?: string;
+          }>();
+
+          rawAfkBots.forEach(bot => {
+            allBotsMap.set(bot.dummyName.toLowerCase(), {
+              name: bot.name,
+              dummyName: bot.dummyName,
+              x: bot.x,
+              y: bot.y,
+              z: bot.z,
+              active: bot.active,
+              owner: bot.owner,
+              ownerUuid: bot.ownerUuid
+            });
+          });
+
+          activeOnlineBots.forEach(bot => {
+            const key = bot.name.toLowerCase();
+            if (!allBotsMap.has(key)) {
+              allBotsMap.set(key, {
+                name: bot.name.replace(/^AFK_/, ''),
+                dummyName: bot.name,
+                active: true,
+                owner: 'Server / App'
+              });
+            } else {
+              const val = allBotsMap.get(key)!;
+              val.active = true;
+            }
+          });
+
+          const combinedBots = Array.from(allBotsMap.values());
+
           return (
             <>
               <div className="panel-card col-span-5">
@@ -841,24 +909,48 @@ function DashboardPage({
 
                 {/* List of active AFK bots */}
                 <div>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Active AFK Bots ({activeBots.length})</span>
-                  {activeBots.length === 0 ? (
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>AFK Bots List ({combinedBots.length})</span>
+                  {combinedBots.length === 0 ? (
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '10px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
-                      No active bots.
+                      No bots saved or spawned.
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                      {activeBots.map(bot => (
-                        <div key={bot.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{bot.name}</span>
-                          <button 
-                            className="btn btn-danger" 
-                            style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
-                            onClick={() => handleDespawnBot(bot.name)}
-                            disabled={!phoneOnline || !status.serverRunning}
-                          >
-                            Despawn
-                          </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                      {combinedBots.map(bot => (
+                        <div key={bot.dummyName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                          <div>
+                            <span style={{ fontSize: '13px', fontWeight: 'bold', display: 'block' }}>{bot.dummyName}</span>
+                            {bot.x !== undefined && (
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                Loc: {bot.x}, {bot.y}, {bot.z} | Owner: {bot.owner}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {bot.active ? (
+                              <button 
+                                className="btn btn-danger" 
+                                style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
+                                onClick={() => handleDespawnBot(bot.dummyName)}
+                                disabled={!phoneOnline || !status.serverRunning}
+                              >
+                                Despawn
+                              </button>
+                            ) : (
+                              <button 
+                                className="btn" 
+                                style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none', background: '#1c3222', color: '#81c784', border: '1px solid #2e4d35' }}
+                                onClick={() => {
+                                  if (bot.ownerUuid && bot.x !== undefined && bot.y !== undefined && bot.z !== undefined) {
+                                    handleQuickSpawnSavedBot(bot.name, bot.ownerUuid, bot.x, bot.y, bot.z);
+                                  }
+                                }}
+                                disabled={!phoneOnline || !status.serverRunning || !bot.ownerUuid}
+                              >
+                                Spawn
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
