@@ -104,6 +104,8 @@ interface SavedAfkBot {
 
 interface DashboardStatus {
   serverRunning: boolean;
+  serverState?: 'stopped' | 'starting' | 'running';
+  bootProgress?: string;
   playersOnline: Player[];
   uptimeSeconds: number;
   tps: number | null;
@@ -668,30 +670,65 @@ function DashboardPage({
         {/* Server Control Card */}
         <div className="panel-card green-theme col-span-7">
           <h2 className="card-title"><ServerIcon /> Server Control</h2>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Server Status</p>
-              <h3 style={{ fontSize: '24px', fontWeight: '800', color: status.serverRunning ? 'var(--success-color)' : 'var(--text-secondary)' }}>
-                {status.serverRunning ? 'Running' : 'Stopped'}
-              </h3>
-            </div>
-            {status.serverRunning && (
+          {(() => {
+            const serverState = status.serverState || (status.serverRunning ? 'running' : 'stopped');
+            let statusText = 'Stopped';
+            let statusColor = 'var(--text-secondary)';
+            if (serverState === 'running') {
+              statusText = 'Running';
+              statusColor = 'var(--success-color)';
+            } else if (serverState === 'starting') {
+              statusText = 'Starting...';
+              statusColor = 'var(--warning-color)';
+            }
+
+            return (
               <>
-                <div>
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Uptime</p>
-                  <h3 style={{ fontSize: '20px', fontWeight: '700' }}>
-                    {formatUptime(status.uptimeSeconds)}
-                  </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Server Status</p>
+                    <h3 style={{ fontSize: '24px', fontWeight: '800', color: statusColor }}>
+                      {statusText}
+                    </h3>
+                  </div>
+                  {serverState === 'running' && (
+                    <>
+                      <div>
+                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Uptime</p>
+                        <h3 style={{ fontSize: '20px', fontWeight: '700' }}>
+                          {formatUptime(status.uptimeSeconds)}
+                        </h3>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>TPS</p>
+                        <h3 style={{ fontSize: '20px', fontWeight: '700', color: status.tps && status.tps < 18 ? 'var(--warning-color)' : 'var(--success-color)' }}>
+                          {status.tps ? status.tps.toFixed(1) : '20.0'}
+                        </h3>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div>
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>TPS</p>
-                  <h3 style={{ fontSize: '20px', fontWeight: '700', color: status.tps && status.tps < 18 ? 'var(--warning-color)' : 'var(--success-color)' }}>
-                    {status.tps ? status.tps.toFixed(1) : '20.0'}
-                  </h3>
-                </div>
+
+                {serverState === 'starting' && (
+                  <div style={{ marginBottom: '20px', background: 'rgba(255, 193, 7, 0.05)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 193, 7, 0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--warning-color)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Booting Sequence</span>
+                      <span style={{ width: '12px', height: '12px', border: '2px solid var(--warning-color)', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {status.bootProgress || 'Launching Java VM runtime...'}
+                    </p>
+                    <style>{`
+                      @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                      }
+                    `}</style>
+                  </div>
+                )}
               </>
-            )}
-          </div>
+            );
+          })()}
 
           {status.serverRunning && (
             <div style={{ marginTop: '0px', marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid var(--neutral-border)' }}>
