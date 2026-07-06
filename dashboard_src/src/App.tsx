@@ -76,6 +76,13 @@ const RefreshCwIcon = () => (
   </svg>
 );
 
+const SettingsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: 'var(--accent-color)' }}>
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 // --- Type definitions ---
 interface Player {
   name: string;
@@ -91,6 +98,16 @@ interface DashboardStatus {
   subdomain: string | null;
   whitelist: string[];
   lastSeen: Timestamp;
+  localIp?: string;
+  serverPort?: number;
+  properties?: {
+    difficulty?: string;
+    gamemode?: string;
+    pvp?: string;
+    maxPlayers?: string;
+    viewDistance?: string;
+    allowNether?: string;
+  };
 }
 
 interface ToastMessage {
@@ -508,7 +525,7 @@ function DashboardPage({
     const checkOnline = () => {
       const lastSeenMillis = status.lastSeen?.toMillis() || 0;
       const diff = Date.now() - lastSeenMillis;
-      setPhoneOnline(diff <= 30000);
+      setPhoneOnline(diff <= 90000);
     };
 
     checkOnline();
@@ -649,6 +666,26 @@ function DashboardPage({
               </>
             )}
           </div>
+
+          {status.serverRunning && (
+            <div style={{ marginTop: '0px', marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid var(--neutral-border)' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Connection Endpoints</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>🌐 Public Custom IP</p>
+                  <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>
+                    {status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'No subdomain set'}
+                  </code>
+                </div>
+                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                  <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>📶 Local Network IP</p>
+                  <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>
+                    {status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565'}
+                  </code>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: '12px' }}>
             {status.serverRunning ? (
@@ -872,6 +909,44 @@ function DashboardPage({
           onDispatch={dispatchCommand}
           showToast={showToast}
         />
+
+        {/* Server Settings Card */}
+        {status.properties && (
+          <div className="panel-card col-span-7">
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Configuration</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
+              Active server properties loaded from configuration.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Difficulty:</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{status.properties.difficulty || 'normal'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Default Mode:</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{status.properties.gamemode || 'survival'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>PVP Combat:</span>
+                <span style={{ fontWeight: 'bold', color: status.properties.pvp === 'true' ? 'var(--success-color)' : 'var(--text-secondary)' }}>
+                  {status.properties.pvp === 'true' ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Max Players:</span>
+                <span style={{ fontWeight: 'bold' }}>{status.properties.maxPlayers || '10'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Render Distance:</span>
+                <span style={{ fontWeight: 'bold' }}>{status.properties.viewDistance || '10'} chunks</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Nether Dimension:</span>
+                <span style={{ fontWeight: 'bold' }}>{status.properties.allowNether === 'true' ? 'Allowed' : 'Disabled'}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}
