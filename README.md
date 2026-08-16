@@ -90,7 +90,7 @@ The app is designed to make server setup, administration, and player management 
 
 ## Links
 
-* Discord: [https://discord.gg/NGPzXFYp](https://discord.gg/NGPzXFYp)
+* Discord: [PocketCraft Discord](dcd.gg/pocketcraft)
 
 ---
 
