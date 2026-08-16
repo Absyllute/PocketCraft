@@ -1,5 +1,5 @@
 <h1 align="center">
-    <img src="./readme_assets/app_icon.png", width="45", align="absmiddle">
+    <img src="./readme_assets/app_icon.png" width="32" align="absmiddle">
     PocketCraft
 </h1>
 
