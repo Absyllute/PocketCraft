@@ -11,7 +11,7 @@ PocketCraft is an Android app for hosting and managing Minecraft servers from yo
 
 ---
 
-## Overview
+<h2 align="center"> Overview </h2>
 
 PocketCraft focuses on mobile-first server hosting with multiple ways for players to connect:
 
@@ -23,7 +23,7 @@ The app is designed to make server setup, administration, and player management 
 
 ---
 
-## Key Features
+<h2 align="center"> Key Features </h2>
 
 ### Server Hosting
 
@@ -72,7 +72,7 @@ The app is designed to make server setup, administration, and player management 
 
 ---
 
-## Requirements
+<h2 align="center"> Requirements </h2>
 
 - Android 8.0 or newer
 - At least 2 GB of RAM recommended
@@ -80,7 +80,7 @@ The app is designed to make server setup, administration, and player management 
 
 ---
 
-## Getting Started
+<h2 align="center"> Getting Started </h2>
 
 1. Install PocketCraft on your Android phone.
 2. Open the app and choose your server location if prompted.
@@ -91,12 +91,12 @@ The app is designed to make server setup, administration, and player management 
 
 ---
 
-## Links
+<h2 align="center"> Links </h2>
 
 - Official Discord: [Join the PocketCraft Discord Community](https://dcd.gg/pocketcraft)
 
 ---
 
-## License
+<h2 align="center"> License </h2>
 
 All rights reserved.
