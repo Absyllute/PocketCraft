@@ -93,7 +93,7 @@ The app is designed to make server setup, administration, and player management 
 
 ## Links
 
-- Discord: [PocketCraft Discord](https://dcd.gg/pocketcraft)
+- ** Official Discord: [Join the PocketCraft Discord Community](https://dcd.gg/pocketcraft) **
 
 ---
 
