@@ -25,50 +25,96 @@ The app is designed to make server setup, administration, and player management 
 
 <h2 align="center"> Key Features </h2>
 
-### Server Hosting
-
-- Create and host Minecraft Java Edition servers directly on Android
-- Select a Minecraft version before starting a server
-- Start, stop, and restart servers from the app
-- Keep server management accessible from anywhere on your phone
-
-### Dual Access & Crossplay
-
-- Share a public relay address for players outside your network
-- Let nearby players join directly over local Wi-Fi
-- Enable full crossplay between Java and Bedrock players
-- Choose the connection method that fits your session or community
-
-### World Management
-
-- Back up worlds to Google Drive
-- Restore saved worlds when needed
-- Edit core world properties
-- Review world data and storage usage
-
-### Player Controls
-
-- View the current player list
-- Manage player actions from the app
-- Teleport, damage, heal, feed, or starve players when appropriate
-- Run commands through the in-app console
-- See player connection status and IP information where supported
-
-### Plugins, Mods, and Customization
-
-- Browse mods and plugins in-app
-- Discover content through Modrinth integration
-- Full support for modded servers
-- Search and filter by category or popularity
-- Install selected items with a simple flow
-- Manage plugins and mods without leaving the app
-
-### Advanced Controls
-
-- Customize server properties
-- Select server location when relay infrastructure is used
-- Use region options such as Global, North America, Europe, and Asia Pacific
-- Keep APK delivery and update flow aligned with the app distribution process
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td>
+            <strong>Server Hosting</strong>
+        </td>
+      <td>
+        <ul>
+            <li> Create and host Minecraft Java Edition servers directly on Android </li>
+            <li> Select a Minecraft version before starting a server </li>
+            <li> Start, stop, and restart servers from the app </li>
+            <li> Keep server management accessible from anywhere on your phone </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong> Dual Access & Crossplay </strong>
+      </td>
+      <td>
+        <ul>
+            <li> Share a public relay address for players outside your network </li>
+            <li> Let nearby players join directly over local Wi-Fi </li>
+            <li> Enable full crossplay between Java and Bedrock players </li>
+            <li> Choose the connection method that fits your session or community </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+        <td>
+            <strong> World Management </strong>
+        </td>
+        <td>
+            <ul>
+                <li>Back up worlds to Google Drive</li>
+                <li>Restore saved worlds when needed</li>
+                <li>Edit core world properties</li>
+                <li>Review world data and storage usage</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong> Player Controls </strong>
+        </td>
+        <td>
+            <ul>
+                <li>View the current player list</li>
+                <li>Manage player actions from the app</li>
+                <li>Teleport, damage, heal, feed, or starve players when appropriate</li>
+                <li>Run commands through the in-app console</li>
+                <li>See player connection status and IP information where supported</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong> Plugins, Mods, and Customization </strong>
+        </td>
+        <td>
+            <ul>
+                <li>Browse mods and plugins in-app</li>
+                <li>Discover content through Modrinth integration</li>
+                <li>Full support for modded servers</li>
+                <li>Search and filter by category or popularity</li>
+                <li>Install selected items with a simple flow</li>
+                <li>Manage plugins and mods without leaving the app</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong> Advanced Controls </strong>
+        </td>
+        <td>
+            <ul>
+                <li>Customize server properties</li>
+                <li>Use region options such as Global, North America, Europe, and Asia Pacific</li>
+                <li>Keep APK delivery and update flow aligned with the app distribution process</li>
+            </ul>
+        </td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
