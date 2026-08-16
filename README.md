@@ -5,8 +5,8 @@
 
 PocketCraft is an Android app for hosting and managing Minecraft servers from your phone. It is built for players, friends, and small communities that want practical server control without depending on a desktop PC for everyday administration.
 
-> ⚠️ **Note**
-> This repository contains only the **source code for the PocketCraft website and other web-based PocketCraft utilities**.
+> [!WARNING] Note
+> This repository contains only the **source code for the PocketCraft web presence and other web-based PocketCraft utilities**.
 > The **actual Android application code is maintained in a separate private repository** for security reasons and is **not open source**.
 
 ---
@@ -93,7 +93,7 @@ The app is designed to make server setup, administration, and player management 
 
 ## Links
 
-- ** Official Discord: [Join the PocketCraft Discord Community](https://dcd.gg/pocketcraft) **
+- Official Discord: [Join the PocketCraft Discord Community](https://dcd.gg/pocketcraft)
 
 ---
 
