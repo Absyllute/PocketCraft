@@ -279,7 +279,7 @@ export function ModernHero() {
           className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md mx-auto sm:max-w-none"
         >
           <motion.a
-            href="/PocketHost.apk"
+            href="/api/apk/download"
             download="PocketHost.apk"
             className="btn-duo px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg"
             whileHover={{ scale: 1.05, y: -3 }}

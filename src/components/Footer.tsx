@@ -181,7 +181,7 @@ export default function Footer() {
               Get PocketCraft on your Android device with direct APK download.
             </p>
             <motion.a
-              href="/PocketHost.apk"
+              href="/api/apk/download"
               download="PocketHost.apk"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#7FE620] hover:bg-[#6FD614] text-black text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
               whileHover={{ scale: 1.05, y: -2 }}
