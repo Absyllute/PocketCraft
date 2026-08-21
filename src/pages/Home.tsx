@@ -184,7 +184,7 @@ const Home = () => {
 
           <motion.a
             href="/api/apk/download"
-            download="PocketHost.apk"
+            download="PocketCraft.apk"
             className="btn-duo inline-flex items-center justify-center gap-3 px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold w-full sm:w-auto shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
