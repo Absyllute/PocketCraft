@@ -15,7 +15,6 @@ export default function Navbar() {
     { href: "/blog", label: "Blog" },
     { href: "/roadmap", label: "Roadmap" },
     { href: "/community", label: "Community" },
-    { href: "/dashboard/", label: "Dashboard", external: true },
   ];
 
   return (

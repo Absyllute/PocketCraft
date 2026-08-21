@@ -2,20 +2,18 @@ import { motion } from "framer-motion";
 import { MINECRAFT_ICONS } from "../lib/minecraft-icons";
 import { useTheme } from "../lib/ThemeContext";
 import { useLowEndDevice } from "../hooks/useLowEndDevice";
-import { PlayStoreIcon } from "./ui/PlayStoreIcon";
+
+const DownloadIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </svg>
+);
 
 const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
     <path d="M20.32 4.37A19.8 19.8 0 0 0 16.18 3a14.3 14.3 0 0 0-.66 1.35 18.07 18.07 0 0 0-7.03 0A14.6 14.6 0 0 0 7.82 3a19.86 19.86 0 0 0-4.14 1.37C1.04 8.31.33 12.16.68 15.95a20.3 20.3 0 0 0 5.08 2.62c.41-.57.78-1.17 1.1-1.8-.61-.23-1.2-.5-1.76-.82.15-.11.3-.23.44-.35a13.97 13.97 0 0 0 12.92 0c.15.12.29.24.44.35-.56.32-1.15.59-1.77.82.33.63.7 1.23 1.11 1.8a20.23 20.23 0 0 0 5.08-2.62c.41-4.39-.7-8.2-2.92-11.58ZM8.87 13.57c-1.01 0-1.84-.93-1.84-2.07 0-1.14.81-2.07 1.84-2.07 1.02 0 1.85.93 1.84 2.07 0 1.14-.82 2.07-1.84 2.07Zm6.26 0c-1.01 0-1.84-.93-1.84-2.07 0-1.14.81-2.07 1.84-2.07 1.02 0 1.85.93 1.84 2.07 0 1.14-.82 2.07-1.84 2.07Z" />
-  </svg>
-);
-
-const DashboardIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect width="7" height="9" x="3" y="3" rx="1" />
-    <rect width="7" height="5" x="14" y="3" rx="1" />
-    <rect width="7" height="9" x="14" y="12" rx="1" />
-    <rect width="7" height="5" x="3" y="16" rx="1" />
   </svg>
 );
 
@@ -281,27 +279,15 @@ export function ModernHero() {
           className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md mx-auto sm:max-w-none"
         >
           <motion.a
-            href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-duo px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+            href="/PocketHost.apk"
+            download="PocketHost.apk"
+            className="btn-duo px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
-            Get it on Google Play
-          </motion.a>
-
-          <motion.a
-            href="/dashboard/"
-            className="px-6 sm:px-10 py-4 bg-[#7FE620] hover:bg-[#6ec21c] text-black font-bold text-sm uppercase tracking-wider transition-all rounded-lg shadow-[0_4px_0_0_rgba(127,230,32,0.3)] inline-flex items-center justify-center gap-2 w-full sm:w-auto"
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            <DashboardIcon className="w-4 h-4" />
-            Web Dashboard
+            <DownloadIcon className="w-5 h-5 flex-shrink-0" />
+            Download APK
           </motion.a>
 
           <motion.a

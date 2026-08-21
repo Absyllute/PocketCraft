@@ -7,7 +7,14 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../lib/ThemeContext";
 import { useLowEndDevice } from "../hooks/useLowEndDevice";
-import { PlayStoreIcon } from "../components/ui/PlayStoreIcon";
+
+const DownloadIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </svg>
+);
 
 const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
@@ -150,7 +157,7 @@ const Home = () => {
               theme === "dark" ? "text-white" : "text-black"
             }`}
           >
-            Get PocketCraft on Google Play
+            Download PocketCraft APK
           </motion.h2>
 
           <motion.p
@@ -162,7 +169,7 @@ const Home = () => {
               theme === "dark" ? "text-white/50" : "text-black/60"
             }`}
           >
-            Tap below to view PocketCraft on the Google Play Store and install it securely on your Android device.
+            Tap below to download the latest PocketCraft APK and install it directly on your Android device.
           </motion.p>
 
           <motion.p
@@ -172,14 +179,13 @@ const Home = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className={`text-sm mb-12 max-w-sm mx-auto ${theme === "dark" ? "text-white/30" : "text-black/50"}`}
           >
-            <strong>Version:</strong> Official Release | <strong>Minimum Android:</strong> 8.0+
+            <strong>Version:</strong> Latest Release | <strong>Minimum Android:</strong> 8.0+ (ARM64)
           </motion.p>
 
           <motion.a
-            href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-duo inline-flex items-center justify-center gap-3 px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold w-full sm:w-auto"
+            href="/PocketHost.apk"
+            download="PocketHost.apk"
+            className="btn-duo inline-flex items-center justify-center gap-3 px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold w-full sm:w-auto shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -187,8 +193,8 @@ const Home = () => {
             whileHover={isLowEnd ? undefined : { scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}
           >
-            <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
-            Get it on Google Play
+            <DownloadIcon className="w-5 h-5 flex-shrink-0" />
+            Download APK (Free)
           </motion.a>
 
           <motion.p
@@ -200,7 +206,7 @@ const Home = () => {
               theme === "dark" ? "text-white/20" : "text-black/40"
             }`}
           >
-            Verified and secured by Google Play Protect.
+            Free & Open • Instant Download • No Root Required
           </motion.p>
 
         </div>

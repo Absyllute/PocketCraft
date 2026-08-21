@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Github, Instagram } from "lucide-react";
+import { Github, Instagram, Download } from "lucide-react";
 import { MINECRAFT_ICONS } from "../lib/minecraft-icons";
 import { useTheme } from "../lib/ThemeContext";
-import { PlayStoreIcon } from "./ui/PlayStoreIcon";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -179,21 +178,20 @@ export default function Footer() {
               Download
             </h4>
             <p className="text-white/30 text-sm mb-4 leading-relaxed">
-              Get PocketCraft on your Android device. Available on Google Play.
+              Get PocketCraft on your Android device with direct APK download.
             </p>
             <motion.a
-              href="https://play.google.com/store/apps/details?id=com.pocketcraft.server"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/PocketHost.apk"
+              download="PocketHost.apk"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#7FE620] hover:bg-[#6FD614] text-black text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
-              <PlayStoreIcon className="w-5 h-5 flex-shrink-0" />
-              Google Play
+              <Download className="w-5 h-5 flex-shrink-0" />
+              Download APK
             </motion.a>
             <p className="text-white/20 text-[10px] mt-3 uppercase tracking-wider">
-              Official release • Android 8.0+
+              Latest release • Android 8.0+
             </p>
           </motion.div>
         </div>
