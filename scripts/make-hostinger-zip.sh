@@ -21,9 +21,9 @@ rm -rf dashboard
 mkdir -p dashboard
 cp -r dashboard_src/dist/* dashboard/
 
-echo "Creating $ZIP_NAME in Hostinger upload format..."
+echo "Creating $ZIP_NAME in Hostinger upload format (excluding heavy APK binaries)..."
 rm -f "$ZIP_NAME"
-zip -r "$ZIP_NAME" package.json package-lock.json index.html vite.config.ts src server.ts public dist dashboard > /dev/null
+zip -r "$ZIP_NAME" package.json package-lock.json index.html vite.config.ts src server.ts public dist dashboard -x "*.apk" > /dev/null
 
 echo "Done: $PROJECT_ROOT/$ZIP_NAME"
-echo "Package includes: package.json, package-lock.json, index.html, vite.config.ts, src/, server.ts, public/, dist/, dashboard/"
+echo "Package size: $(du -sh "$ZIP_NAME" | cut -f1)"
