@@ -6,7 +6,7 @@ import {
   signInWithPopup, 
   signOut 
 } from './firebase';
-import { onAuthStateChanged, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, type User } from 'firebase/auth';
 import { doc, collection, addDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 
 // --- Icons ---
@@ -67,30 +67,15 @@ const PowerIcon = () => (
   </svg>
 );
 
-const RefreshCwIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-    <path d="M16 3h5v5"/>
-    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-    <path d="M8 21H3v-5"/>
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', color: 'var(--accent-color)' }}>
-    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
 // --- Type definitions ---
 interface Player {
   name: string;
   uuid: string;
+  pingText?: string;
 }
 
-interface SavedAfkBot {
-  id: number;
+interface AfkBot {
+  id: string;
   name: string;
   dummyName: string;
   x: number;
@@ -104,26 +89,38 @@ interface SavedAfkBot {
 
 interface DashboardStatus {
   serverRunning: boolean;
-  serverState?: 'stopped' | 'starting' | 'running';
+  serverState?: 'running' | 'starting' | 'stopped';
   bootProgress?: string;
+  bootProgressPercent?: number;
   playersOnline: Player[];
   uptimeSeconds: number;
   tps: number | null;
   afkBotEnabled: boolean;
-  afkBots?: SavedAfkBot[];
   subdomain: string | null;
   whitelist: string[];
   lastSeen: Timestamp;
+  relayAddress?: string | null;
   localIp?: string;
-  serverPort?: number;
+  afkBots?: AfkBot[];
+  allPlayers?: any[];
+  currentWorld?: string;
+  worlds?: string[];
   properties?: {
     difficulty?: string;
     gamemode?: string;
     pvp?: string;
     maxPlayers?: string;
     viewDistance?: string;
+    simulationDistance?: string;
     allowNether?: string;
     whiteList?: string;
+    spawnProtection?: string;
+    levelSeed?: string;
+    hardcore?: string;
+    spawnMonsters?: string;
+    generateStructures?: string;
+    worldDisplayName?: string;
+    worldDescription?: string;
   };
 }
 
@@ -138,10 +135,62 @@ interface ConsoleLine {
   text: string;
 }
 
+// --- Subtle Background Mobs Component ---
+function SubtleBackgroundMobs() {
+  const mobs = [
+    {
+      name: 'Creeper',
+      d: 'M2 2h20v20H2V2zm4 4v4h4V6H6zm10 0v4h4V6h-4zm-6 6h4v2h-4v-2zm-2 2h8v4H6v-4z',
+      color: '#22c55e'
+    }
+  ];
+
+  const [items] = useState(() => {
+    return Array.from({ length: 12 }).map((_, i) => {
+      const mob = mobs[i % mobs.length];
+      return {
+        id: i,
+        mob,
+        left: `${(i * 9) % 95}%`,
+        delay: `${i * 4}s`,
+        size: `${24 + (i * 7) % 24}px`,
+        duration: `${35 + (i * 8) % 30}s`
+      };
+    });
+  });
+
+  return (
+    <div className="subtle-bg-mobs">
+      {items.map(item => (
+        <svg
+          key={item.id}
+          className="floating-mob"
+          style={{
+            left: item.left,
+            width: item.size,
+            height: item.size,
+            animationDelay: item.delay,
+            animationDuration: item.duration,
+            color: item.mob.color
+          }}
+          viewBox="0 0 24 24"
+        >
+          <path d={item.mob.d} />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Email auth states
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   // Toast Helper
   const showToast = (type: 'success' | 'error', text: string) => {
@@ -169,6 +218,25 @@ function App() {
     }
   };
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      showToast('error', 'Please fill in all fields.');
+      return;
+    }
+    try {
+      if (isRegisterMode) {
+        await createUserWithEmailAndPassword(auth, emailInput.trim(), passwordInput.trim());
+        showToast('success', 'Account registered successfully!');
+      } else {
+        await signInWithEmailAndPassword(auth, emailInput.trim(), passwordInput.trim());
+        showToast('success', 'Logged in successfully!');
+      }
+    } catch (e: any) {
+      showToast('error', e.message || 'Authentication failed.');
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -191,7 +259,16 @@ function App() {
       {user ? (
         <DashboardPage user={user} onLogout={handleLogout} showToast={showToast} />
       ) : (
-        <LoginPage onLoginWithGoogle={handleLogin} showToast={showToast} />
+        <LoginPage 
+          onLogin={handleLogin}
+          emailInput={emailInput}
+          setEmailInput={setEmailInput}
+          passwordInput={passwordInput}
+          setPasswordInput={setPasswordInput}
+          isRegisterMode={isRegisterMode}
+          setIsRegisterMode={setIsRegisterMode}
+          handleEmailAuth={handleEmailAuth}
+        />
       )}
 
       {/* Toast Render */}
@@ -209,116 +286,82 @@ function App() {
 
 // --- Login Page Component ---
 function LoginPage({ 
-  onLoginWithGoogle, 
-  showToast 
+  onLogin,
+  emailInput,
+  setEmailInput,
+  passwordInput,
+  setPasswordInput,
+  isRegisterMode,
+  setIsRegisterMode,
+  handleEmailAuth
 }: { 
-  onLoginWithGoogle: () => void; 
-  showToast: (type: 'success' | 'error', text: string) => void;
+  onLogin: () => void;
+  emailInput: string;
+  setEmailInput: (v: string) => void;
+  passwordInput: string;
+  setPasswordInput: (v: string) => void;
+  isRegisterMode: boolean;
+  setIsRegisterMode: (v: boolean) => void;
+  handleEmailAuth: (e: React.FormEvent) => void;
 }) {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      showToast('error', 'Please fill in all fields.');
-      return;
-    }
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        showToast('success', 'Account created successfully!');
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        showToast('success', 'Logged in successfully!');
-      }
-    } catch (err: any) {
-      let msg = err.message || 'Authentication failed.';
-      if (err.code === 'auth/email-already-in-use') {
-        msg = 'That email is already registered.';
-      } else if (err.code === 'auth/weak-password') {
-        msg = 'Password should be at least 6 characters.';
-      } else if (err.code === 'auth/invalid-email') {
-        msg = 'Please enter a valid email address.';
-      } else if (err.code === 'auth/invalid-credential') {
-        msg = 'Invalid email or password.';
-      }
-      showToast('error', msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="auth-container">
       <div className="auth-card" style={{ maxWidth: '400px', width: '90%' }}>
         <h1 className="auth-title">PocketCraft</h1>
-        <p className="auth-subtitle">Server Web Control Dashboard</p>
+        <p className="auth-subtitle" style={{ marginBottom: '24px' }}>Server Web Control Dashboard</p>
         
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Email Address</label>
+        <form onSubmit={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>Email Address</label>
             <input 
               type="email" 
-              className="form-control" 
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              style={{ width: '100%', marginTop: '4px', padding: '10px 14px' }}
+              className="form-control"
+              placeholder="your@email.com"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              style={{ padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--panel-border)', color: 'var(--text-primary)' }}
               required
             />
           </div>
-
-          <div style={{ textAlign: 'left' }}>
-            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Password</label>
+          
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600' }}>Password</label>
             <input 
               type="password" 
-              className="form-control" 
+              className="form-control"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              style={{ width: '100%', marginTop: '4px', padding: '10px 14px' }}
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              style={{ padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--panel-border)', color: 'var(--text-primary)' }}
               required
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '12px', marginTop: '8px' }}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', marginTop: '6px', fontSize: '14px', fontWeight: '700' }}>
+            {isRegisterMode ? 'Register & Sign In' : 'Sign In'}
           </button>
+          
+          <div style={{ textAlign: 'center', marginTop: '4px' }}>
+            <button 
+              type="button" 
+              style={{ background: 'none', border: 'none', color: 'var(--accent-color)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => setIsRegisterMode(!isRegisterMode)}
+            >
+              {isRegisterMode ? 'Already have an account? Sign In' : "Don't have an account? Register"}
+            </button>
+          </div>
         </form>
 
-        <p style={{ fontSize: '13px', marginTop: '14px', color: 'var(--text-secondary)' }}>
-          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <span 
-            onClick={() => setIsSignUp(!isSignUp)} 
-            style={{ color: 'var(--accent-color)', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </span>
-        </p>
-
-        <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', gap: '10px' }}>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>OR</span>
-          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '24px 0 16px 0' }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>or</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--panel-border)' }} />
         </div>
 
         <button 
-          type="button"
           className="btn btn-secondary" 
-          onClick={onLoginWithGoogle} 
-          style={{ width: '100%', padding: '12px' }}
-          disabled={loading}
+          onClick={onLogin} 
+          style={{ width: '100%', padding: '12px', fontSize: '14px', fontWeight: '700', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)' }}
         >
           Sign In with Google
         </button>
@@ -341,27 +384,8 @@ function DashboardPage({
   const [loading, setLoading] = useState(true);
   const [phoneOnline, setPhoneOnline] = useState(false);
   const [proUser, setProUser] = useState(false);
-  const [dashboardSecret, setDashboardSecret] = useState<string | null>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-
-  // Real-time Player Stats States
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [playerStats, setPlayerStats] = useState<{
-    pos?: string;
-    dimension?: string;
-    health?: string;
-    xp?: string;
-    deathPos?: string;
-    deathDim?: string;
-  } | null>(null);
-
-  // AFK Bot Spawn Form States
-  const [botName, setBotName] = useState('');
-  const [botX, setBotX] = useState('');
-  const [botY, setBotY] = useState('64');
-  const [botZ, setBotZ] = useState('');
-  const [botOwner, setBotOwner] = useState('');
-  const [botSpawning, setBotSpawning] = useState(false);
+  const [dashboardSecret, setDashboardSecret] = useState('');
+  const [profilePlayer, setProfilePlayer] = useState<any | null>(null);
 
   // Command Pending States
   const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
@@ -374,6 +398,17 @@ function DashboardPage({
     onConfirm: () => void;
   } | null>(null);
 
+  // Local slider states for immediate UI updates
+  const [sliderMaxPlayers, setSliderMaxPlayers] = useState<string | null>(null);
+  const [sliderSpawnProtection, setSliderSpawnProtection] = useState<string | null>(null);
+  const [sliderViewDistance, setSliderViewDistance] = useState<string | null>(null);
+  const [sliderSimulationDistance, setSliderSimulationDistance] = useState<string | null>(null);
+  const [tpDestination, setTpDestination] = useState('');
+  const [newBotName, setNewBotName] = useState('');
+  const [newBotX, setNewBotX] = useState('');
+  const [newBotY, setNewBotY] = useState('');
+  const [newBotZ, setNewBotZ] = useState('');
+
   // Snapshot Listeners
   useEffect(() => {
     // 1. Listen to dashboard status
@@ -382,6 +417,10 @@ function DashboardPage({
       if (snapshot.exists()) {
         const data = snapshot.data() as DashboardStatus;
         setStatus(data);
+        setSliderMaxPlayers(null);
+        setSliderSpawnProtection(null);
+        setSliderViewDistance(null);
+        setSliderSimulationDistance(null);
       } else {
         setStatus(null);
       }
@@ -392,17 +431,17 @@ function DashboardPage({
       setLoading(false);
     });
 
-    // 2. Fetch User Entitlement State and Dashboard Secret
+    // 2. Fetch User Entitlement State
     const userDocRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         const tier = data.premiumTier || 'none';
         setProUser(tier === 'premium' || tier === 'supportive');
-        setDashboardSecret(data.dashboardSecret || null);
+        setDashboardSecret(data.dashboardSecret || '');
       } else {
         setProUser(false);
-        setDashboardSecret(null);
+        setDashboardSecret('');
       }
     });
 
@@ -411,138 +450,6 @@ function DashboardPage({
       unsubscribeUser();
     };
   }, [user.uid]);
-
-  const fetchPlayerStats = async (playerName: string) => {
-    setStatsLoading(true);
-    setPlayerStats(null);
-    try {
-      const posRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Pos` });
-      const dimRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Dimension` });
-      const hpRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" Health` });
-      const xpRes = await dispatchCommand('rcon', { command: `xp query "${playerName}" levels` });
-      const deathRes = await dispatchCommand('rcon', { command: `data get entity "${playerName}" LastDeathLocation` });
-
-      const posMatches = posRes.match(/[-+]?[0-9]*\.?[0-9]+/g);
-      const parsedPos = posMatches && posMatches.length >= 3 
-        ? `X: ${Math.round(parseFloat(posMatches[0]))}, Y: ${Math.round(parseFloat(posMatches[1]))}, Z: ${Math.round(parseFloat(posMatches[2]))}`
-        : 'Unknown';
-
-      const parsedDim = dimRes.includes('the_nether') ? 'The Nether' 
-        : dimRes.includes('the_end') ? 'The End' 
-        : 'Overworld';
-
-      const hpMatch = hpRes.match(/[0-9.]+/);
-      const parsedHp = hpMatch ? `${Math.round(parseFloat(hpMatch[0]))} / 20` : 'Unknown';
-
-      const xpMatch = xpRes.match(/has (\d+) experience/i) || xpRes.match(/(\d+)/);
-      const parsedXp = xpMatch ? xpMatch[1] : '0';
-
-      let deathPos = '';
-      let deathDim = '';
-      if (deathRes && !deathRes.includes('No data found')) {
-        const deathMatches = deathRes.match(/[-+]?\d+/g);
-        if (deathMatches && deathMatches.length >= 3) {
-          const numbers = deathMatches.map(Number).filter(n => !isNaN(n));
-          const coords = numbers.length > 3 ? numbers.slice(1, 4) : numbers.slice(0, 3);
-          deathPos = `${coords[0]} ${coords[1]} ${coords[2]}`;
-        }
-        deathDim = deathRes.includes('the_nether') ? 'minecraft:the_nether'
-          : deathRes.includes('the_end') ? 'minecraft:the_end'
-          : 'minecraft:overworld';
-      }
-
-      setPlayerStats({
-        pos: parsedPos,
-        dimension: parsedDim,
-        health: parsedHp,
-        xp: parsedXp,
-        deathPos: deathPos || undefined,
-        deathDim: deathDim || undefined
-      });
-    } catch (e) {
-      console.error(e);
-      showToast('error', 'Failed to fetch player stats.');
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedPlayer) {
-      fetchPlayerStats(selectedPlayer.name);
-    } else {
-      setPlayerStats(null);
-    }
-  }, [selectedPlayer]);
-
-  const handleSpawnBot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const currentStatus = status;
-    if (!currentStatus || !phoneOnline || !currentStatus.serverRunning || botSpawning) return;
-
-    const name = botName.trim().replace(/[^a-zA-Z0-9_]/g, '');
-    if (!name) {
-      showToast('error', 'Please enter a valid bot name (letters/numbers/underscores only).');
-      return;
-    }
-
-    const xVal = parseInt(botX);
-    const yVal = parseInt(botY);
-    const zVal = parseInt(botZ);
-    if (isNaN(xVal) || isNaN(yVal) || isNaN(zVal)) {
-      showToast('error', 'Coordinates must be valid numbers.');
-      return;
-    }
-
-    const owner = currentStatus.playersOnline.find(p => p.name === botOwner);
-    if (!owner) {
-      showToast('error', 'Please select an online player to act as owner.');
-      return;
-    }
-
-    setBotSpawning(true);
-    try {
-      await dispatchCommand('rcon', { command: `forceload add ${xVal} ${zVal}` });
-      const spawnRes = await dispatchCommand('rcon', { 
-        command: `dummy create "${name}" ${owner.uuid} world ${xVal} ${yVal} ${zVal}` 
-      });
-      await dispatchCommand('rcon', { command: `forceload remove ${xVal} ${zVal}` });
-
-      if (spawnRes.includes('Created dummy') || spawnRes.includes('success') || !spawnRes.includes('failed')) {
-        showToast('success', `AFK Bot AFK_${name} spawned successfully!`);
-        setBotName('');
-        setBotX('');
-        setBotZ('');
-      } else {
-        showToast('error', spawnRes || 'Failed to spawn AFK bot.');
-      }
-    } catch (err: any) {
-      showToast('error', err.message || 'Failed to spawn AFK bot.');
-    } finally {
-      setBotSpawning(false);
-    }
-  };
-
-  const handleDespawnBot = async (botName: string) => {
-    try {
-      await dispatchCommand('rcon', { command: `kick "${botName}"` });
-      await dispatchCommand('rcon', { command: `kill @a[name="${botName}",limit=1]` });
-      showToast('success', `Despawned AFK bot ${botName}`);
-    } catch (err: any) {
-      showToast('error', 'Failed to despawn bot.');
-    }
-  };
-
-  const handleQuickSpawnSavedBot = async (name: string, ownerUuid: string, x: number, y: number, z: number) => {
-    try {
-      await dispatchCommand('rcon', { command: `forceload add ${x} ${z}` });
-      await dispatchCommand('rcon', { command: `dummy create "${name}" ${ownerUuid} world ${x} ${y} ${z}` });
-      await dispatchCommand('rcon', { command: `forceload remove ${x} ${z}` });
-      showToast('success', `Spawned saved bot AFK_${name}`);
-    } catch (err: any) {
-      showToast('error', 'Failed to spawn saved bot.');
-    }
-  };
 
   // Heartbeat loop check (Phone offline if now - lastSeen > 30s)
   useEffect(() => {
@@ -553,7 +460,7 @@ function DashboardPage({
     const checkOnline = () => {
       const lastSeenMillis = status.lastSeen?.toMillis() || 0;
       const diff = Date.now() - lastSeenMillis;
-      setPhoneOnline(diff <= 90000);
+      setPhoneOnline(diff <= 30000);
     };
 
     checkOnline();
@@ -570,11 +477,11 @@ function DashboardPage({
       const cmdRef = await addDoc(collection(db, 'users', user.uid, 'dashboard_commands'), {
         type,
         payload,
+        secret: dashboardSecret,
         createdAt: Timestamp.now(),
         status: 'pending',
         result: null,
-        errorMessage: null,
-        secret: dashboardSecret
+        errorMessage: null
       });
 
       // Listen for command result
@@ -648,8 +555,62 @@ function DashboardPage({
     );
   }
 
+  const resolvedServerState = status.serverState || (status.serverRunning ? 'running' : 'stopped');
+  const rawBootProgress = status.bootProgress?.trim() || '';
+  const visibleBootProgress = resolvedServerState === 'starting'
+    ? (rawBootProgress.toLowerCase().includes('stopping') ? 'Launching Java VM runtime...' : rawBootProgress || 'Launching Java VM runtime...')
+    : '';
+  const bootProgressPercent = resolvedServerState === 'starting'
+    ? Math.max(0, Math.min(100, status.bootProgressPercent || 0))
+    : 0;
+  const serverStatusLabel = resolvedServerState === 'running'
+    ? 'Running'
+    : resolvedServerState === 'starting'
+      ? 'Starting...'
+      : 'Stopped';
+  const serverStatusColor = resolvedServerState === 'running'
+    ? 'var(--success-color)'
+    : resolvedServerState === 'starting'
+      ? 'var(--warning-color)'
+      : 'var(--text-secondary)';
+
+  // Combine online players and all offline players from allPlayers
+  const allJoinedPlayers = (() => {
+    const onlineMap = new Map(status.playersOnline.map(p => [p.name, p]));
+    const offlineList = (status.allPlayers || []).map(p => ({
+      name: p.name,
+      uuid: p.uuid,
+      online: onlineMap.has(p.name),
+      pingText: onlineMap.get(p.name)?.pingText || '',
+      ...p
+    }));
+
+    // Fallback to online players if allPlayers is empty
+    if (offlineList.length === 0) {
+      return status.playersOnline.map(p => ({
+        name: p.name,
+        uuid: p.uuid,
+        online: true,
+        pingText: p.pingText || ''
+      }));
+    }
+
+    // Sort by online status (true first), then name
+    return offlineList.sort((a, b) => {
+      if (a.online && !b.online) return -1;
+      if (!a.online && b.online) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  })();
+
+  const maxPlayersVal = sliderMaxPlayers ?? status.properties?.maxPlayers ?? '10';
+  const spawnProtectionVal = sliderSpawnProtection ?? status.properties?.spawnProtection ?? '16';
+  const viewDistanceVal = sliderViewDistance ?? status.properties?.viewDistance ?? '10';
+  const simulationDistanceVal = sliderSimulationDistance ?? status.properties?.simulationDistance ?? '10';
+
   return (
     <div className="dashboard-container">
+      <SubtleBackgroundMobs />
       {/* Header */}
       <header className="dashboard-header">
         <div className="brand-section">
@@ -667,111 +628,95 @@ function DashboardPage({
 
       {/* Grid Layout */}
       <div className="dashboard-grid">
+        {!phoneOnline && (
+          <div className="panel-card" style={{ gridColumn: 'span 12', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.24)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px 20px', animation: 'fadeIn 0.3s ease-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--danger-color)', fontWeight: '800', fontSize: '16px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Troubleshooting Connection Notice (Phone is Offline)
+            </div>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              Your phone appears to be offline. To ensure the PocketCraft Web Dashboard can access your phone at any time without keeping the app open, please disable battery optimization for the app:
+            </p>
+            <ol style={{ fontSize: '13px', color: 'var(--text-secondary)', paddingLeft: '20px', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>Open <strong>Settings</strong> on your phone.</li>
+              <li>Navigate to <strong>Apps</strong> → <strong>PocketCraft</strong> → <strong>Battery</strong>.</li>
+              <li>Set the battery usage to <strong>"Unrestricted"</strong> (disable optimization).</li>
+              <li>Enable <strong>"Always Alive in Background"</strong> inside the app settings tab.</li>
+            </ol>
+          </div>
+        )}
         {/* Server Control Card */}
-        <div className="panel-card green-theme col-span-7">
+        <div className="panel-card" style={{ gridColumn: 'span 8' }}>
           <h2 className="card-title"><ServerIcon /> Server Control</h2>
-          {(() => {
-            const serverState = status.serverState || (status.serverRunning ? 'running' : 'stopped');
-            let statusText = 'Stopped';
-            let statusColor = 'var(--text-secondary)';
-            if (serverState === 'running') {
-              statusText = 'Running';
-              statusColor = 'var(--success-color)';
-            } else if (serverState === 'starting') {
-              statusText = 'Starting...';
-              statusColor = 'var(--warning-color)';
-            }
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Server Status</p>
+              <h3 style={{ fontSize: '24px', fontWeight: '800', color: serverStatusColor }}>
+                {serverStatusLabel}
+              </h3>
+            </div>
+            {resolvedServerState === 'running' && (
+              <div>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Uptime</p>
+                <h3 style={{ fontSize: '20px', fontWeight: '700' }}>
+                  {formatUptime(status.uptimeSeconds)}
+                </h3>
+              </div>
+            )}
+          </div>
 
-            return (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
-                  <div>
-                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Server Status</p>
-                    <h3 style={{ fontSize: '24px', fontWeight: '800', color: statusColor }}>
-                      {statusText}
-                    </h3>
-                  </div>
-                  {serverState === 'running' && (
-                    <>
-                      <div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Uptime</p>
-                        <h3 style={{ fontSize: '20px', fontWeight: '700' }}>
-                          {formatUptime(status.uptimeSeconds)}
-                        </h3>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>TPS</p>
-                        <h3 style={{ fontSize: '20px', fontWeight: '700', color: status.tps && status.tps < 18 ? 'var(--warning-color)' : 'var(--success-color)' }}>
-                          {status.tps ? status.tps.toFixed(1) : '20.0'}
-                        </h3>
-                      </div>
-                    </>
-                  )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--panel-border)', minWidth: 0 }}>
+              <p style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Relay IP Address</p>
+              <p 
+                style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={status.relayAddress || 'None'}
+              >
+                {status.relayAddress || 'None'}
+              </p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--panel-border)', minWidth: 0 }}>
+              <p style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Local IP Address</p>
+              <p 
+                style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={status.localIp || 'None'}
+              >
+                {status.localIp || 'None'}
+              </p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--panel-border)', minWidth: 0 }}>
+              <p style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Custom IP Subdomain</p>
+              <p 
+                style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'None'}
+              >
+                {status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'None'}
+              </p>
+            </div>
+          </div>
+
+          {resolvedServerState === 'starting' && (
+            <div style={{ marginBottom: '20px', background: 'rgba(245, 158, 11, 0.08)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.24)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--warning-color)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Booting Sequence
+                </span>
+                <span style={{ width: '12px', height: '12px', border: '2px solid var(--warning-color)', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '0 0 12px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {visibleBootProgress}
+              </p>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  <span>Startup Progress</span>
+                  <span style={{ fontWeight: '700' }}>{bootProgressPercent}%</span>
                 </div>
-
-                {serverState === 'starting' && (
-                  <div style={{ marginBottom: '20px', background: 'rgba(255, 193, 7, 0.05)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 193, 7, 0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--warning-color)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Booting Sequence</span>
-                      <span style={{ width: '12px', height: '12px', border: '2px solid var(--warning-color)', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-                    </div>
-                    <p style={{ fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {status.bootProgress || 'Launching Java VM runtime...'}
-                    </p>
-                    <style>{`
-                      @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                      }
-                    `}</style>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-
-          {status.serverRunning && (
-            <div style={{ marginTop: '0px', marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid var(--neutral-border)' }}>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Connection Endpoints</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>🌐 Public Custom IP</p>
-                    <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>
-                      {status.subdomain ? `${status.subdomain}.pocketcraft.online` : 'No subdomain set'}
-                    </code>
-                  </div>
-                  {status.subdomain && (
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${status.subdomain}.pocketcraft.online`);
-                        showToast('success', 'Public Custom IP copied!');
-                      }}
-                    >
-                      Copy
-                    </button>
-                  )}
-                </div>
-                <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--neutral-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>📶 Local Network IP</p>
-                    <code style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>
-                      {status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565'}
-                    </code>
-                  </div>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => {
-                      const ipStr = status.localIp ? `${status.localIp}:${status.serverPort || 25565}` : '127.0.0.1:25565';
-                      navigator.clipboard.writeText(ipStr);
-                      showToast('success', 'Local Network IP copied!');
-                    }}
-                  >
-                    Copy
-                  </button>
+                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${bootProgressPercent}%`, height: '100%', background: 'linear-gradient(90deg, var(--warning-color), #fbbf24)', borderRadius: '999px', transition: 'width 0.25s ease' }}></div>
                 </div>
               </div>
             </div>
@@ -779,280 +724,223 @@ function DashboardPage({
 
           <div style={{ display: 'flex', gap: '12px' }}>
             {status.serverRunning ? (
-              <>
-                <button 
-                  className="btn btn-danger" 
-                  onClick={() => triggerConfirm(
-                    'Stop Server', 
-                    'Are you sure you want to stop the Minecraft server? This will disconnect all online players.',
-                    () => handleAction('stop_server', {}, 'Server stop initiated.')
-                  )}
-                  disabled={!phoneOnline || pendingActions['stop_server_{}']}
-                >
-                  <PowerIcon /> {pendingActions['stop_server_{}'] ? 'Stopping...' : 'Stop Server'}
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ background: '#d97706', color: '#fff', borderColor: '#d97706' }}
-                  onClick={() => triggerConfirm(
-                    'Restart Server', 
-                    'Are you sure you want to restart the Minecraft server? This will temporarily disconnect all online players.',
-                    () => handleAction('restart_server', {}, 'Server restart initiated.')
-                  )}
-                  disabled={!phoneOnline || pendingActions['restart_server_{}']}
-                >
-                  <RefreshCwIcon /> {pendingActions['restart_server_{}'] ? 'Restarting...' : 'Restart Server'}
-                </button>
-              </>
+              <button 
+                className="btn btn-danger" 
+                onClick={() => triggerConfirm(
+                  'Stop Server', 
+                  'Are you sure you want to stop the Minecraft server? This will disconnect all online players.',
+                  () => handleAction('stop_server', {}, 'Server stop initiated.')
+                )}
+                disabled={!phoneOnline || pendingActions['stop_server_{}']}
+              >
+                <PowerIcon /> {pendingActions['stop_server_{}'] ? 'Stopping...' : 'Stop Server'}
+              </button>
             ) : (
               <button 
                 className="btn btn-primary" 
                 onClick={() => handleAction('start_server', {}, 'Server start initiated.')}
-                disabled={!phoneOnline || pendingActions['start_server_{}']}
+                disabled={!phoneOnline || resolvedServerState === 'starting' || pendingActions['start_server_{}']}
               >
-                <PowerIcon /> {pendingActions['start_server_{}'] ? 'Starting...' : 'Start Server'}
+                <PowerIcon /> {resolvedServerState === 'starting' || pendingActions['start_server_{}'] ? 'Starting...' : 'Start Server'}
               </button>
             )}
           </div>
         </div>
 
-        {/* AFK Helper Card */}
-        {(() => {
-          const rawAfkBots = status.afkBots || [];
-          const activeOnlineBots = status.playersOnline.filter(p => p.name.startsWith('AFK_'));
-          const normalPlayers = status.playersOnline.filter(p => !p.name.startsWith('AFK_'));
-
-          // Merge saved database bots and currently online AFK bots
-          const allBotsMap = new Map<string, {
-            name: string;
-            dummyName: string;
-            x?: number;
-            y?: number;
-            z?: number;
-            active: boolean;
-            owner?: string;
-            ownerUuid?: string;
-          }>();
-
-          rawAfkBots.forEach(bot => {
-            allBotsMap.set(bot.dummyName.toLowerCase(), {
-              name: bot.name,
-              dummyName: bot.dummyName,
-              x: bot.x,
-              y: bot.y,
-              z: bot.z,
-              active: bot.active,
-              owner: bot.owner,
-              ownerUuid: bot.ownerUuid
-            });
-          });
-
-          activeOnlineBots.forEach(bot => {
-            const key = bot.name.toLowerCase();
-            if (!allBotsMap.has(key)) {
-              allBotsMap.set(key, {
-                name: bot.name.replace(/^AFK_/, ''),
-                dummyName: bot.name,
-                active: true,
-                owner: 'Server / App'
-              });
-            } else {
-              const val = allBotsMap.get(key)!;
-              val.active = true;
-            }
-          });
-
-          const combinedBots = Array.from(allBotsMap.values());
-
-          return (
-            <>
-              <div className="panel-card col-span-5">
-                <h2 className="card-title"><BotIcon /> AFK Bots Manager</h2>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-                  Spawn persistent dummy players to keep chunks loaded and farm systems active.
-                </p>
-
-                {/* Form to spawn a new AFK bot */}
-                <form onSubmit={handleSpawnBot} className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px', marginBottom: '16px', border: '1px solid var(--neutral-border)' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>Spawn AFK Bot</span>
-                  
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Bot Name (e.g. IronFarm)" 
-                    value={botName}
-                    onChange={(e) => setBotName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                    disabled={botSpawning || !phoneOnline || !status.serverRunning}
-                    required
-                    style={{ padding: '8px 12px', fontSize: '13px' }}
-                  />
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="X" 
-                      value={botX}
-                      onChange={(e) => setBotX(e.target.value.replace(/[^0-9-]/g, ''))}
-                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
-                      required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
+        {/* Players Registry Card */}
+        <div className="panel-card" style={{ gridColumn: 'span 4' }}>
+          <h2 className="card-title"><UsersIcon /> Players Registry ({allJoinedPlayers.length})</h2>
+          <div className="player-list" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+            {allJoinedPlayers.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
+                No players registered.
+              </div>
+            ) : (
+              allJoinedPlayers.map(p => (
+                <div 
+                  key={p.uuid || p.name} 
+                  className="player-item" 
+                  style={{ cursor: 'pointer', padding: '10px 14px' }}
+                  onClick={() => setProfilePlayer(p)}
+                >
+                  <div className="player-name-wrapper">
+                    <span 
+                      style={{ 
+                        display: 'inline-block', 
+                        width: '8px', 
+                        height: '8px', 
+                        borderRadius: '50%', 
+                        background: p.online ? 'var(--success-color)' : '#4b5563',
+                        boxShadow: p.online ? '0 0 8px var(--success-color)' : 'none'
+                      }}
                     />
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="Y" 
-                      value={botY}
-                      onChange={(e) => setBotY(e.target.value.replace(/[^0-9-]/g, ''))}
-                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
-                      required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
-                    />
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="Z" 
-                      value={botZ}
-                      onChange={(e) => setBotZ(e.target.value.replace(/[^0-9-]/g, ''))}
-                      disabled={botSpawning || !phoneOnline || !status.serverRunning}
-                      required
-                      style={{ padding: '8px', fontSize: '13px', flex: 1, minWidth: '0', textAlign: 'center' }}
-                    />
+                    <span className="player-name">{p.name}</span>
+                    <span className={`player-badge ${p.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
+                      {p.name.startsWith('.') ? 'Bedrock' : 'Java'}
+                    </span>
                   </div>
-
-                  <select 
-                    className="form-control" 
-                    value={botOwner}
-                    onChange={(e) => setBotOwner(e.target.value)}
-                    disabled={botSpawning || !phoneOnline || !status.serverRunning}
-                    required
-                    style={{ padding: '8px', fontSize: '13px', background: '#06070a' }}
-                  >
-                    <option value="" disabled>Select Owner (Online Player)...</option>
-                    {normalPlayers.map(p => (
-                      <option key={p.name} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary"
-                    disabled={botSpawning || !phoneOnline || !status.serverRunning || !botOwner}
-                    style={{ padding: '10px', fontSize: '13px' }}
-                  >
-                    {botSpawning ? 'Spawning Bot...' : 'Spawn Bot'}
-                  </button>
-                </form>
-
-                {/* List of active AFK bots */}
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>AFK Bots List ({combinedBots.length})</span>
-                  {combinedBots.length === 0 ? (
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '10px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
-                      No bots saved or spawned.
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                      {combinedBots.map(bot => (
-                        <div key={bot.dummyName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                          <div>
-                            <span style={{ fontSize: '13px', fontWeight: 'bold', display: 'block' }}>{bot.dummyName}</span>
-                            {bot.x !== undefined && (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                                Loc: {bot.x}, {bot.y}, {bot.z} | Owner: {bot.owner}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            {bot.active ? (
-                              <button 
-                                className="btn btn-danger" 
-                                style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none' }}
-                                onClick={() => handleDespawnBot(bot.dummyName)}
-                                disabled={!phoneOnline || !status.serverRunning}
-                              >
-                                Despawn
-                              </button>
-                            ) : (
-                              <button 
-                                className="btn" 
-                                style={{ padding: '4px 8px', fontSize: '11px', boxShadow: 'none', background: '#1c3222', color: '#81c784', border: '1px solid #2e4d35' }}
-                                onClick={() => {
-                                  if (bot.ownerUuid && bot.x !== undefined && bot.y !== undefined && bot.z !== undefined) {
-                                    handleQuickSpawnSavedBot(bot.name, bot.ownerUuid, bot.x, bot.y, bot.z);
-                                  }
-                                }}
-                                disabled={!phoneOnline || !status.serverRunning || !bot.ownerUuid}
-                              >
-                                Spawn
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {p.online && p.pingText && (
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.pingText}</span>
+                    )}
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ padding: '4px 10px', fontSize: '12px' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProfilePlayer(p);
+                      }}
+                    >
+                      Details
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ))
+            )}
+          </div>
+        </div>
 
-              {/* Players Online Card */}
-              <div className="panel-card col-span-6">
-                <h2 className="card-title"><UsersIcon /> Players Online ({normalPlayers.length})</h2>
-                <div className="player-list">
-                  {normalPlayers.length === 0 ? (
-                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
-                      No players currently connected.
-                    </div>
-                  ) : (
-                    normalPlayers.map(p => (
-                      <div key={p.uuid || p.name} className="player-item">
-                        <div className="player-name-wrapper" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(p)}>
-                          <span className="player-name">{p.name}</span>
-                          <span className={`player-badge ${p.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
-                            {p.name.startsWith('.') ? 'Bedrock' : 'Java'}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{ padding: '6px 12px', fontSize: '12px' }}
-                            onClick={() => handleAction('kick', { playerName: p.name }, `Kicked player ${p.name}`)}
-                            disabled={!phoneOnline || !status.serverRunning}
-                          >
-                            Kick
-                          </button>
-                          <button 
-                            className="btn btn-danger" 
-                            style={{ padding: '6px 12px', fontSize: '12px' }}
-                            onClick={() => triggerConfirm(
-                              'Ban Player',
-                              `Are you sure you want to permanently ban player ${p.name} from the server?`,
-                              () => handleAction('ban', { playerName: p.name }, `Banned player ${p.name}`)
-                            )}
-                            disabled={!phoneOnline || !status.serverRunning}
-                          >
-                            Ban
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          );
-        })()}
-
-        {/* Whitelist Card */}
-        <WhitelistCardComponent 
-          whitelist={status.whitelist} 
+        {/* Console Command Card */}
+        <ConsoleCardComponent 
           phoneOnline={phoneOnline} 
           serverRunning={status.serverRunning}
           onDispatch={dispatchCommand}
         />
 
-        {/* Console Command Card */}
-        <ConsoleCardComponent 
+        {/* AFK Helper Card */}
+        <div className="panel-card" style={{ gridColumn: 'span 5' }}>
+          <h2 className="card-title"><BotIcon /> AFK Helper Bots</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '15px', lineHeight: '1.5' }}>
+            Spawn dummy players in-game to keep chunks loaded and farm operations active.
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '16px' }}>
+            <div>
+              <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>All AFK Bots</p>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Status on active world</p>
+            </div>
+            <label className="switch">
+              <input 
+                type="checkbox" 
+                checked={status.afkBotEnabled} 
+                onChange={(e) => handleAction('toggle_afk_bot', { enabled: e.target.checked }, `AFK bot status set to ${e.target.checked}`)}
+                disabled={!phoneOnline || !status.serverRunning || pendingActions[`toggle_afk_bot_${JSON.stringify({ enabled: !status.afkBotEnabled })}`]}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+
+          {/* Bot list */}
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', marginBottom: '8px', margin: 0 }}>Bot List ({status.afkBots?.length || 0})</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+              {(!status.afkBots || status.afkBots.length === 0) ? (
+                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--panel-border)', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>No AFK bots configured.</p>
+                </div>
+              ) : (
+                status.afkBots.map((bot) => (
+                  <div key={bot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>{bot.name}</p>
+                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                        📍 {bot.x}, {bot.y}, {bot.z}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        className={`btn ${bot.active ? 'btn-primary' : 'btn-secondary'}`}
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                        onClick={() => handleAction('toggle_afk_bot_individual', { id: bot.id }, `Toggled active state for bot ${bot.name}`)}
+                        disabled={!phoneOnline || pendingActions[`toggle_afk_bot_individual_${JSON.stringify({ id: bot.id })}`]}
+                      >
+                        {bot.active ? 'Active' : 'Inactive'}
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                        onClick={() => handleAction('delete_afk_bot', { id: bot.id }, `Deleted bot ${bot.name}`)}
+                        disabled={!phoneOnline || pendingActions[`delete_afk_bot_${JSON.stringify({ id: bot.id })}`]}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Add Bot Form */}
+          <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '16px' }}>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', marginBottom: '8px', margin: 0 }}>Create AFK Bot</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Bot Name (e.g. Steve)"
+                value={newBotName}
+                onChange={(e) => setNewBotName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                disabled={!phoneOnline}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="X"
+                  value={newBotX}
+                  onChange={(e) => setNewBotX(e.target.value)}
+                  style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                  disabled={!phoneOnline}
+                />
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Y"
+                  value={newBotY}
+                  onChange={(e) => setNewBotY(e.target.value)}
+                  style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                  disabled={!phoneOnline}
+                />
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="Z"
+                  value={newBotZ}
+                  onChange={(e) => setNewBotZ(e.target.value)}
+                  style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                  disabled={!phoneOnline}
+                />
+              </div>
+              <button
+                className="btn btn-primary"
+                style={{ padding: '8px 16px', fontSize: '12px', marginTop: '4px' }}
+                onClick={() => {
+                  if (newBotName.trim()) {
+                    handleAction('create_afk_bot', {
+                      name: newBotName.trim(),
+                      x: Number(newBotX) || 0,
+                      y: Number(newBotY) || 64,
+                      z: Number(newBotZ) || 0
+                    }, `Added bot ${newBotName.trim()}`);
+                    setNewBotName('');
+                    setNewBotX('');
+                    setNewBotY('');
+                    setNewBotZ('');
+                  }
+                }}
+                disabled={!phoneOnline || !newBotName.trim() || pendingActions[`create_afk_bot_${JSON.stringify({ name: newBotName.trim(), x: Number(newBotX) || 0, y: Number(newBotY) || 64, z: Number(newBotZ) || 0 })}`]}
+              >
+                Add Bot
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Whitelist Card */}
+        <WhitelistCardComponent 
+          whitelist={status.whitelist} 
           phoneOnline={phoneOnline} 
           serverRunning={status.serverRunning}
           onDispatch={dispatchCommand}
@@ -1067,168 +955,373 @@ function DashboardPage({
           showToast={showToast}
         />
 
-        {/* Server Settings Card */}
-        <div className="panel-card col-span-7">
-          <h2 className="card-title" style={{ display: 'flex', alignItems: 'center' }}><SettingsIcon /> Server Settings & World Rules</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-            Configure game difficulty, default modes, rendering distances, and active gamerules via RCON.
-          </p>
-          {!status.properties ? (
-            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '13px', border: '1px dashed var(--neutral-border)' }}>
-              Waiting for server configurations to be uploaded from the app...
+        {/* Server Properties Card */}
+        <div className="panel-card" style={{ gridColumn: 'span 7' }}>
+          <h2 className="card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Server Properties
+          </h2>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Difficulty */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Difficulty</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Set game difficulty level</p>
+              </div>
+              <select 
+                className="form-control"
+                style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}
+                value={status.properties?.difficulty || 'normal'}
+                onChange={(e) => handleAction('update_property', { key: 'difficulty', value: e.target.value }, `Difficulty set to ${e.target.value}`)}
+                disabled={!phoneOnline}
+              >
+                <option value="peaceful">Peaceful</option>
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+              </select>
             </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
-              
-              {/* Difficulty Dropdown */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Difficulty:</span>
-                <select 
-                  value={status.properties.difficulty || 'normal'}
-                  onChange={(e) => handleAction('rcon', { command: `difficulty ${e.target.value}` }, `Server difficulty changed to ${e.target.value}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
-                >
-                  <option value="peaceful">Peaceful</option>
-                  <option value="easy">Easy</option>
-                  <option value="normal">Normal</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
 
-              {/* Default Gamemode Dropdown */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Gamemode:</span>
-                <select 
-                  value={status.properties.gamemode || 'survival'}
-                  onChange={(e) => handleAction('rcon', { command: `defaultgamemode ${e.target.value}` }, `Default gamemode changed to ${e.target.value}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
-                >
-                  <option value="survival">Survival</option>
-                  <option value="creative">Creative</option>
-                  <option value="adventure">Adventure</option>
-                  <option value="spectator">Spectator</option>
-                </select>
+            {/* Gamemode */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Game Mode</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Default player game mode</p>
               </div>
-
-              {/* Whitelist Toggle */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Whitelist:</span>
-                <select 
-                  value={status.properties.whiteList === 'true' ? 'true' : 'false'}
-                  onChange={(e) => handleAction('rcon', { command: e.target.value === 'true' ? 'whitelist on' : 'whitelist off' }, `Whitelist set to ${e.target.value === 'true' ? 'Enabled' : 'Disabled'}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
-                >
-                  <option value="false">Disabled</option>
-                  <option value="true">Enabled</option>
-                </select>
-              </div>
-
-              {/* View Distance Dropdown */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Render Distance:</span>
-                <select 
-                  value={status.properties.viewDistance || '10'}
-                  onChange={(e) => handleAction('rcon', { command: `view-distance ${e.target.value}` }, `Render distance changed to ${e.target.value} chunks`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                  style={{ padding: '4px 8px', fontSize: '12px', background: '#06070a', border: '1px solid var(--neutral-border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}
-                >
-                  <option value="4">4 chunks</option>
-                  <option value="6">6 chunks</option>
-                  <option value="8">8 chunks</option>
-                  <option value="10">10 chunks</option>
-                  <option value="12">12 chunks</option>
-                  <option value="16">16 chunks</option>
-                </select>
-              </div>
-
-              {/* Gamerules Section (Keep Inventory, Daylight Cycle, Mob Griefing) */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Keep Inventory:</span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule keepInventory true' }, 'Gamerule keepInventory set to true')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    ON
-                  </button>
-                  <button 
-                    className="btn btn-danger" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule keepInventory false' }, 'Gamerule keepInventory set to false')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    OFF
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Daylight Cycle:</span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule doDaylightCycle true' }, 'Gamerule doDaylightCycle set to true')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    ON
-                  </button>
-                  <button 
-                    className="btn btn-danger" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule doDaylightCycle false' }, 'Gamerule doDaylightCycle set to false')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    OFF
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Mob Griefing:</span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule mobGriefing true' }, 'Gamerule mobGriefing set to true')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    ON
-                  </button>
-                  <button 
-                    className="btn btn-danger" 
-                    style={{ padding: '2px 8px', fontSize: '11px', boxShadow: 'none' }}
-                    onClick={() => handleAction('rcon', { command: 'gamerule mobGriefing false' }, 'Gamerule mobGriefing set to false')}
-                    disabled={!phoneOnline || !status.serverRunning}
-                  >
-                    OFF
-                  </button>
-                </div>
-              </div>
-
-              {/* Read-only properties (PVP, Max Players, Nether) */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-muted)' }}>PVP Combat:</span>
-                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.pvp === 'true' ? 'Enabled' : 'Disabled'}</span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Max Players Limit:</span>
-                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.maxPlayers || '10'}</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid var(--neutral-border)' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Nether Dimension:</span>
-                <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{status.properties.allowNether === 'true' ? 'Allowed' : 'Disabled'}</span>
-              </div>
-
+              <select 
+                className="form-control"
+                style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}
+                value={status.properties?.gamemode || 'survival'}
+                onChange={(e) => handleAction('update_property', { key: 'gamemode', value: e.target.value }, `Game Mode set to ${e.target.value}`)}
+                disabled={!phoneOnline}
+              >
+                <option value="survival">Survival</option>
+                <option value="creative">Creative</option>
+                <option value="adventure">Adventure</option>
+                <option value="spectator">Spectator</option>
+              </select>
             </div>
-          )}
+
+            {/* PVP Toggle */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>PVP (Player vs Player)</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Allow players to damage each other</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.pvp !== 'false'}
+                  onChange={(e) => handleAction('update_property', { key: 'pvp', value: e.target.checked ? 'true' : 'false' }, `PVP set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {/* Whitelist Toggle */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Whitelist</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Only allow whitelisted players to join</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.whiteList === 'true'}
+                  onChange={(e) => handleAction('update_property', { key: 'white-list', value: e.target.checked ? 'true' : 'false' }, `Whitelist set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {/* Max Players */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Max Players: <span style={{ color: 'var(--accent-color)', fontWeight: '800' }}>{maxPlayersVal}</span></p>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Maximum concurrent players (1-50)</p>
+                </div>
+              </div>
+              <input 
+                type="range"
+                min="1"
+                max="50"
+                style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}
+                value={maxPlayersVal}
+                onChange={(e) => setSliderMaxPlayers(e.target.value)}
+                onMouseUp={(e) => handleAction('update_property', { key: 'max-players', value: e.currentTarget.value }, `Max players set to ${e.currentTarget.value}`)}
+                onTouchEnd={(e) => handleAction('update_property', { key: 'max-players', value: e.currentTarget.value }, `Max players set to ${e.currentTarget.value}`)}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* Spawn Protection */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Spawn Protection: <span style={{ color: 'var(--accent-color)', fontWeight: '800' }}>{spawnProtectionVal} blocks</span></p>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Spawn area protection radius in blocks (0-128)</p>
+                </div>
+              </div>
+              <input 
+                type="range"
+                min="0"
+                max="128"
+                style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}
+                value={spawnProtectionVal}
+                onChange={(e) => setSliderSpawnProtection(e.target.value)}
+                onMouseUp={(e) => handleAction('update_property', { key: 'spawn-protection', value: e.currentTarget.value }, `Spawn protection set to ${e.currentTarget.value}`)}
+                onTouchEnd={(e) => handleAction('update_property', { key: 'spawn-protection', value: e.currentTarget.value }, `Spawn protection set to ${e.currentTarget.value}`)}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* View Distance */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>View Distance: <span style={{ color: 'var(--accent-color)', fontWeight: '800' }}>{viewDistanceVal} chunks</span></p>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Render distance in chunks (3-32)</p>
+                </div>
+              </div>
+              <input 
+                type="range"
+                min="3"
+                max="32"
+                style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}
+                value={viewDistanceVal}
+                onChange={(e) => setSliderViewDistance(e.target.value)}
+                onMouseUp={(e) => handleAction('update_property', { key: 'view-distance', value: e.currentTarget.value }, `View distance set to ${e.currentTarget.value}`)}
+                onTouchEnd={(e) => handleAction('update_property', { key: 'view-distance', value: e.currentTarget.value }, `View distance set to ${e.currentTarget.value}`)}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* Simulation Distance */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Simulation Distance: <span style={{ color: 'var(--accent-color)', fontWeight: '800' }}>{simulationDistanceVal} chunks</span></p>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Simulation radius in chunks (3-32)</p>
+                </div>
+              </div>
+              <input 
+                type="range"
+                min="3"
+                max="32"
+                style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}
+                value={simulationDistanceVal}
+                onChange={(e) => setSliderSimulationDistance(e.target.value)}
+                onMouseUp={(e) => handleAction('update_property', { key: 'simulation-distance', value: e.currentTarget.value }, `Simulation distance set to ${e.currentTarget.value}`)}
+                onTouchEnd={(e) => handleAction('update_property', { key: 'simulation-distance', value: e.currentTarget.value }, `Simulation distance set to ${e.currentTarget.value}`)}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* Divider / Subheader */}
+            <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '16px', marginTop: '8px' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>World & Generator Settings</h3>
+            </div>
+
+            {/* Server Display Name */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Server Display Name</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Custom display name for the server</p>
+              </div>
+              <input 
+                type="text"
+                className="form-control"
+                style={{ width: '180px', padding: '6px 8px', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}
+                defaultValue={status.properties?.worldDisplayName || status.currentWorld || 'world'}
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  const key = `pocketcraft-world-display.${status.currentWorld || 'world'}`;
+                  if (val) {
+                    handleAction('update_property', { key, value: val }, `Server display name set to ${val}`);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  }
+                }}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* Server Description */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Server Description</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Description shown in multiplayer server list</p>
+              </div>
+              <input 
+                type="text"
+                className="form-control"
+                style={{ width: '180px', padding: '6px 8px', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}
+                defaultValue={status.properties?.worldDescription || 'Hosted on Pocketcraft'}
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  const key = `pocketcraft-world-description.${status.currentWorld || 'world'}`;
+                  if (val) {
+                    handleAction('update_property', { key, value: val }, `Server description set to ${val}`);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  }
+                }}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* World Seed */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>World Seed</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Seed for generating new chunks</p>
+              </div>
+              <input 
+                type="text"
+                className="form-control"
+                style={{ width: '180px', padding: '6px 8px', background: 'rgba(0,0,0,0.3)', color: 'var(--text-primary)', border: '1px solid var(--panel-border)', borderRadius: '8px' }}
+                defaultValue={status.properties?.levelSeed || ''}
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  if (val !== status.properties?.levelSeed) {
+                    handleAction('update_property', { key: 'level-seed', value: val }, `World seed set to ${val}`);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  }
+                }}
+                disabled={!phoneOnline}
+              />
+            </div>
+
+            {/* Allow Nether */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Allow Nether</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Enable nether dimension generation</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.allowNether !== 'false'}
+                  onChange={(e) => handleAction('update_property', { key: 'allow-nether', value: e.target.checked ? 'true' : 'false' }, `Allow Nether set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {/* Hardcore Mode */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Hardcore Mode</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Enforce hardcore rules (permanent death)</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.hardcore === 'true'}
+                  onChange={(e) => handleAction('update_property', { key: 'hardcore', value: e.target.checked ? 'true' : 'false' }, `Hardcore set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {/* Spawn Monsters */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Spawn Monsters</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Spawn hostile monsters automatically</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.spawnMonsters !== 'false'}
+                  onChange={(e) => handleAction('update_property', { key: 'spawn-monsters', value: e.target.checked ? 'true' : 'false' }, `Spawn monsters set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {/* Generate Structures */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', fontSize: '14px', margin: 0 }}>Generate Structures</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Generate villages, dungeons, temples</p>
+              </div>
+              <label className="switch">
+                <input 
+                  type="checkbox"
+                  checked={status.properties?.generateStructures !== 'false'}
+                  onChange={(e) => handleAction('update_property', { key: 'generate-structures', value: e.target.checked ? 'true' : 'false' }, `Generate structures set to ${e.target.checked}`)}
+                  disabled={!phoneOnline}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* World Manager Card */}
+        <div className="panel-card" style={{ gridColumn: 'span 5' }}>
+          <h2 className="card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            World Manager
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <p style={{ fontWeight: '700', fontSize: '14px', marginBottom: '8px', margin: 0 }}>Active World</p>
+              <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: '800', color: 'var(--accent-color)' }}>{status.currentWorld || 'world'}</span>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: '700', color: 'var(--accent-color)', background: 'rgba(168, 85, 247, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>Active</span>
+              </div>
+            </div>
+
+            <div>
+              <p style={{ fontWeight: '700', fontSize: '14px', marginBottom: '8px', margin: 0 }}>Available Worlds</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '140px', overflowY: 'auto' }}>
+                {(status.worlds || ['world']).map(world => (
+                  <div key={world} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '8px 12px' }}>
+                    <span style={{ fontSize: '13px' }}>{world}</span>
+                    {world !== status.currentWorld && (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 8px', fontSize: '12px' }}
+                        onClick={() => handleAction('switch_world', { worldName: world }, `Active world switched to ${world}`)}
+                        disabled={!phoneOnline || status.serverRunning}
+                      >
+                        Switch
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {status.serverRunning && (
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>Stop the server to switch worlds</p>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -1246,215 +1339,271 @@ function DashboardPage({
         </div>
       )}
 
-      {/* Player Profile Modal */}
-      {selectedPlayer && (
-        <div className="modal-overlay" onClick={() => setSelectedPlayer(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-              <h3 className="modal-title" style={{ margin: 0 }}>Player Profile</h3>
-              <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }} onClick={() => setSelectedPlayer(null)}>✕</button>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)', marginBottom: '18px' }}>
+      {profilePlayer && (
+        <div className="modal-overlay" onClick={() => setProfilePlayer(null)}>
+          <div 
+            className="modal-content" 
+            style={{ maxWidth: '760px', width: '95%', padding: '28px', textAlign: 'left', display: 'flex', flexDirection: 'row', gap: '24px', flexWrap: 'wrap' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left Column - Avatar & Platform */}
+            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(0,0,0,0.15)', borderRadius: '16px', padding: '20px', border: '1px solid var(--panel-border)', minWidth: '180px' }}>
               <img 
-                src={
-                  selectedPlayer.name.startsWith('.')
-                    ? `https://minotar.net/helm/Steve/100.png`
-                    : `https://crafatar.com/renders/body/${selectedPlayer.uuid || selectedPlayer.name}?size=120&overlay`
-                } 
-                alt={selectedPlayer.name}
-                style={{ height: '120px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}
+                src={profilePlayer.name.startsWith('.') 
+                  ? "https://minotar.net/helm/Steve/120.png" 
+                  : `https://crafatar.com/renders/body/${profilePlayer.uuid || profilePlayer.name}?size=120&overlay`}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://minotar.net/armor/body/${selectedPlayer.name}/120.png`;
+                  (e.target as HTMLImageElement).src = `https://minotar.net/armor/body/${profilePlayer.name}/120.png`;
                 }}
+                alt="Avatar"
+                style={{ width: '120px', height: '160px', objectFit: 'contain', marginBottom: '16px' }}
               />
-              <div style={{ textAlign: 'center' }}>
-                <h4 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 6px 0', color: 'var(--text-primary)' }}>{selectedPlayer.name}</h4>
-                <span className={`player-badge ${selectedPlayer.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`} style={{ fontSize: '11px', padding: '4px 8px' }}>
-                  {selectedPlayer.name.startsWith('.') ? 'Bedrock Edition' : 'Java Edition'}
+              <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px', textAlign: 'center' }}>{profilePlayer.name}</h3>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <span className={`player-badge ${profilePlayer.name.startsWith('.') ? 'badge-bedrock' : 'badge-java'}`}>
+                  {profilePlayer.name.startsWith('.') ? 'Bedrock' : 'Java'}
                 </span>
-              </div>
-            </div>
-
-            {/* Real-time Stats scanner */}
-            {selectedPlayer && (
-              <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Player Stats</label>
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '4px 8px', fontSize: '10px', boxShadow: 'none' }}
-                    onClick={() => fetchPlayerStats(selectedPlayer.name)}
-                    disabled={statsLoading}
-                  >
-                    Refresh Stats
-                  </button>
-                </div>
-                
-                {statsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Scanning player data...
-                  </div>
-                ) : playerStats ? (
-                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px', border: '1px solid var(--neutral-border)', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>Location:</span>
-                      <span style={{ fontWeight: 'bold' }}>{playerStats.pos}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>Dimension:</span>
-                      <span style={{ fontWeight: 'bold' }}>{playerStats.dimension}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>Health:</span>
-                      <span style={{ fontWeight: 'bold', color: 'var(--danger-color)' }}>❤ {playerStats.health}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>XP Levels:</span>
-                      <span style={{ fontWeight: 'bold', color: 'var(--success-color)' }}>✨ {playerStats.xp}</span>
-                    </div>
-                    {playerStats.deathPos && (
-                      <div style={{ borderTop: '1px solid var(--neutral-border)', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>Last Death:</span>
-                        <button 
-                          className="btn btn-warning" 
-                          style={{ padding: '4px 8px', fontSize: '10px', boxShadow: 'none' }}
-                          onClick={() => handleAction('rcon', { command: `execute in ${playerStats.deathDim} run tp "${selectedPlayer.name}" ${playerStats.deathPos}` }, `Teleported ${selectedPlayer.name} to last death location.`)}
-                          disabled={!phoneOnline || !status.serverRunning}
-                        >
-                          TP to Death Location
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    No stats cached. Refresh to scan.
-                  </div>
+                {profilePlayer.isOp && (
+                  <span className="player-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>OP</span>
+                )}
+                {profilePlayer.isWhitelisted && (
+                  <span className="player-badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }}>Whitelisted</span>
                 )}
               </div>
-            )}
-
-            <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>Player UUID</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={selectedPlayer.uuid || 'N/A'} 
-                  readOnly 
-                  style={{ fontSize: '12px', padding: '8px 12px', flex: 1, fontFamily: 'var(--font-mono)' }}
-                />
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ padding: '8px 12px', fontSize: '12px' }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(selectedPlayer.uuid || '');
-                    showToast('success', 'UUID copied to clipboard!');
-                  }}
-                >
-                  Copy
-                </button>
-              </div>
             </div>
 
-            <div style={{ textAlign: 'left' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Quick Admin Actions</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '12px', padding: '10px' }}
-                  onClick={() => handleAction('rcon', { command: `op "${selectedPlayer.name}"` }, `OP granted to ${selectedPlayer.name}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Make OP
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '12px', padding: '10px' }}
-                  onClick={() => handleAction('rcon', { command: `deop "${selectedPlayer.name}"` }, `OP revoked from ${selectedPlayer.name}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Remove OP
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '12px', padding: '10px' }}
-                  onClick={() => handleAction('rcon', { command: `gamemode creative "${selectedPlayer.name}"` }, `Creative mode set for ${selectedPlayer.name}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Creative Mode
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '12px', padding: '10px' }}
-                  onClick={() => handleAction('rcon', { command: `gamemode survival "${selectedPlayer.name}"` }, `Survival mode set for ${selectedPlayer.name}`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Survival Mode
-                </button>
-                <button 
-                  className="btn btn-danger" 
-                  style={{ fontSize: '12px', padding: '10px', gridColumn: 'span 2' }}
-                  onClick={() => {
-                    setSelectedPlayer(null);
-                    triggerConfirm(
-                      'Ban Player',
-                      `Are you sure you want to permanently ban player ${selectedPlayer.name} from the server?`,
-                      () => handleAction('ban', { playerName: selectedPlayer.name }, `Banned player ${selectedPlayer.name}`)
-                    );
-                  }}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Ban Player
-                </button>
-              </div>
-            </div>
+            {/* Right Column - Server Details & Actions */}
+            <div style={{ flex: '2 1 400px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <h4 style={{ fontSize: '14px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Player Status & Metrics</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                  
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Coordinates</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                      {profilePlayer.x !== undefined ? `${profilePlayer.x.toFixed(0)}, ${profilePlayer.y.toFixed(0)}, ${profilePlayer.z.toFixed(0)}` : 'N/A'}
+                    </p>
+                  </div>
 
-            {/* Teleportation Controls */}
-            <div style={{ textAlign: 'left', marginTop: '18px', paddingTop: '18px', borderTop: '1px solid var(--neutral-border)' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>Teleport Commands</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ fontSize: '12px', padding: '10px' }}
-                  onClick={() => handleAction('rcon', { command: `tp "${selectedPlayer.name}" 0 80 0` }, `Teleported ${selectedPlayer.name} to spawn.`)}
-                  disabled={!phoneOnline || !status.serverRunning}
-                >
-                  Teleport to Spawn
-                </button>
-                
-                {/* TP to Player dropdown */}
-                {status.playersOnline.filter(p => p.name !== selectedPlayer.name).length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                    <select 
-                      id="tpTargetPlayer" 
-                      className="form-control" 
-                      style={{ flex: 1, padding: '8px', fontSize: '12px', background: '#06070a' }}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Select target...</option>
-                      {status.playersOnline
-                        .filter(p => p.name !== selectedPlayer.name)
-                        .map(p => (
-                          <option key={p.name} value={p.name}>{p.name}</option>
-                        ))}
-                    </select>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ fontSize: '12px', padding: '8px 12px' }}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Dimension</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
+                      {profilePlayer.dimension || 'Overworld'}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Health</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', color: 'var(--danger-color)', margin: 0 }}>
+                      ❤️ {profilePlayer.health !== undefined ? `${(profilePlayer.health).toFixed(0)}/20` : '20/20'}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>XP Level</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
+                      ✨ {profilePlayer.xpLevel !== undefined ? profilePlayer.xpLevel : '0'}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Ping</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', color: 'var(--success-color)', margin: 0 }}>
+                      📶 {profilePlayer.pingText || (profilePlayer.online ? 'Online' : 'Offline')}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Game Mode</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
+                      {profilePlayer.gamemode || 'Survival'}
+                    </p>
+                  </div>
+
+                  {/* Playtime */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Playtime</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', margin: 0 }}>
+                      ⏱️ {profilePlayer.playtime !== undefined ? (() => {
+                        const sec = parseInt(profilePlayer.playtime);
+                        if (!sec) return '0m';
+                        const h = Math.floor(sec / 3600);
+                        const m = Math.floor((sec % 3600) / 60);
+                        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                      })() : 'N/A'}
+                    </p>
+                  </div>
+
+                  {/* Hunger */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Hunger</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', color: '#f97316', margin: 0 }}>
+                      🍖 {profilePlayer.hunger !== undefined ? `${profilePlayer.hunger}/20` : '20/20'}
+                    </p>
+                  </div>
+
+                  {/* Deaths */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)' }}>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Deaths</p>
+                    <p style={{ fontSize: '13px', fontWeight: '700', color: '#ef4444', margin: 0 }}>
+                      💀 {profilePlayer.deaths !== undefined ? profilePlayer.deaths : '0'}
+                    </p>
+                  </div>
+
+                  {/* Last Death */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid var(--panel-border)', gridColumn: 'span 2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', margin: 0 }}>Last Death Position</p>
+                      <p style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                        📍 {profilePlayer.deathX !== undefined && profilePlayer.deathX !== 0 
+                          ? `${profilePlayer.deathX.toFixed(0)}, ${profilePlayer.deathY.toFixed(0)}, ${profilePlayer.deathZ.toFixed(0)} (${profilePlayer.deathDim ? profilePlayer.deathDim.replace('minecraft:', '') : 'overworld'})` 
+                          : 'None'}
+                      </p>
+                    </div>
+                    {profilePlayer.deathX !== undefined && profilePlayer.deathX !== 0 && (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 8px', fontSize: '10px' }}
+                        onClick={() => handleAction('rcon', { command: `tp "${profilePlayer.name}" ${profilePlayer.deathX.toFixed(0)} ${profilePlayer.deathY.toFixed(0)} ${profilePlayer.deathZ.toFixed(0)}` }, `Teleported ${profilePlayer.name} to last death location`)}
+                        disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                      >
+                        Teleport
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ borderTop: '1px solid var(--panel-border)', paddingTop: '12px' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '700', marginBottom: '8px', margin: 0 }}>Administrative Commands</p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `op "${profilePlayer.name}"` }, `Made ${profilePlayer.name} OP`)}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    OP
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `deop "${profilePlayer.name}"` }, `Removed OP from ${profilePlayer.name}`)}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    De-OP
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `gamemode creative "${profilePlayer.name}"` }, `Set Creative Mode`)}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  >
+                    Creative
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `gamemode survival "${profilePlayer.name}"` }, `Set Survival Mode`)}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  >
+                    Survival
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction(profilePlayer.isWhitelisted ? 'whitelist_remove' : 'whitelist_add', { playerName: profilePlayer.name }, `Whitelist toggled`)}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    {profilePlayer.isWhitelisted ? 'Remove Whitelist' : 'Add Whitelist'}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => {
+                      setProfilePlayer(null);
+                      triggerConfirm('Ban Player', `Ban ${profilePlayer.name}?`, () => handleAction('ban', { playerName: profilePlayer.name }, `Banned ${profilePlayer.name}`));
+                    }}
+                    disabled={!phoneOnline || !status.serverRunning}
+                  >
+                    Ban
+                  </button>
+                  {profilePlayer.online && (
+                    <button
+                      className="btn btn-danger"
+                      style={{ padding: '6px 12px', fontSize: '12px' }}
                       onClick={() => {
-                        const sel = document.getElementById('tpTargetPlayer') as HTMLSelectElement;
-                        if (sel.value) {
-                          handleAction('rcon', { command: `tp "${selectedPlayer.name}" "${sel.value}"` }, `Teleported ${selectedPlayer.name} to ${sel.value}`);
-                        }
+                        setProfilePlayer(null);
+                        handleAction('kick', { playerName: profilePlayer.name }, `Kicked ${profilePlayer.name}`);
                       }}
                       disabled={!phoneOnline || !status.serverRunning}
                     >
-                      TP to Player
+                      Kick
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Additional Quick commands: Heal, Kill, Hunger */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `effect give "${profilePlayer.name}" instant_health 1 255 true` }, `Healed ${profilePlayer.name}`)}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  >
+                    Heal
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    onClick={() => handleAction('rcon', { command: `effect give "${profilePlayer.name}" saturation 1 255 true` }, `Filled hunger of ${profilePlayer.name}`)}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  >
+                    Fill Hunger
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                    onClick={() => handleAction('rcon', { command: `kill "${profilePlayer.name}"` }, `Killed ${profilePlayer.name}`)}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  >
+                    Kill
+                  </button>
+                </div>
+
+                {/* Teleport Coordinates / Player Name */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', minWidth: '60px' }}>Teleport:</span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Coords (X Y Z) or Player Name"
+                    value={tpDestination}
+                    onChange={(e) => setTpDestination(e.target.value)}
+                    style={{ flex: 1, padding: '4px 8px', fontSize: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--panel-border)', borderRadius: '6px', color: 'var(--text-primary)' }}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    style={{ padding: '4px 12px', fontSize: '12px' }}
+                    onClick={() => {
+                      if (tpDestination.trim()) {
+                        handleAction('rcon', { command: `tp "${profilePlayer.name}" ${tpDestination.trim()}` }, `Teleported ${profilePlayer.name} to ${tpDestination.trim()}`);
+                        setTpDestination('');
+                      }
+                    }}
+                    disabled={!phoneOnline || !status.serverRunning || !profilePlayer.online || !tpDestination.trim()}
+                  >
+                    Go
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto', borderTop: '1px solid var(--panel-border)', paddingTop: '10px' }}>
+                <button className="btn btn-secondary" onClick={() => setProfilePlayer(null)}>Close</button>
               </div>
             </div>
           </div>
@@ -1508,7 +1657,7 @@ function ConsoleCardComponent({
   };
 
   return (
-    <div className="panel-card col-span-7">
+    <div className="panel-card" style={{ gridColumn: 'span 7' }}>
       <h2 className="card-title"><ConsoleIcon /> RCON Console Command</h2>
       <div className="console-wrapper">
         <div className="console-scrollback" ref={scrollRef}>
@@ -1580,7 +1729,7 @@ function WhitelistCardComponent({
   };
 
   return (
-    <div className="panel-card col-span-6">
+    <div className="panel-card" style={{ gridColumn: 'span 6' }}>
       <h2 className="card-title"><ShieldIcon /> Whitelist Manager ({whitelist.length})</h2>
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
         <input 
@@ -1625,7 +1774,7 @@ function WhitelistCardComponent({
   );
 }
 
-// --- Custom IP Card Sub-component ---
+// --- Custom Subdomain Card Sub-component ---
 function SubdomainCardComponent({
   currentSubdomain,
   proUser,
@@ -1659,22 +1808,22 @@ function SubdomainCardComponent({
     setSaving(true);
     try {
       await onDispatch('set_subdomain', { subdomain: val });
-      showToast('success', 'Custom IP updated! Restart server to apply.');
+      showToast('success', 'Custom subdomain updated! Restart server to apply.');
     } catch (e: any) {
-      showToast('error', e.message || 'Could not update Custom IP.');
+      showToast('error', e.message || 'Could not update subdomain.');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="panel-card col-span-5">
-      <h2 className="card-title"><GlobeIcon /> Custom IP</h2>
+    <div className="panel-card" style={{ gridColumn: 'span 5' }}>
+      <h2 className="card-title"><GlobeIcon /> Custom IP Subdomain</h2>
       
       {!proUser ? (
         <div style={{ textAlign: 'center', padding: '10px' }}>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-            Custom IP customization requires a Pro or Member tier.
+            Custom subdomain customization requires a Pro or Member tier.
           </p>
           <div className="status-pill status-offline" style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '11px' }}>
             🔒 Feature Locked
@@ -1683,13 +1832,13 @@ function SubdomainCardComponent({
       ) : (
         <form onSubmit={handleSave} className="form-group">
           <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-            Customize your relay routing IP (e.g. `yourname.pocketcraft.online`).
+            Customize your relay routing IP (e.g. `yourname.as.pocketcraft.online`).
           </p>
           <div style={{ display: 'flex', gap: '10px' }}>
             <input 
               type="text" 
               className="form-control" 
-              placeholder="custom-ip" 
+              placeholder="subdomain" 
               value={subdomainInput}
               onChange={(e) => setSubdomainInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
               disabled={saving || !phoneOnline}
@@ -1704,7 +1853,7 @@ function SubdomainCardComponent({
             </button>
           </div>
           <p className="helper-text">
-            Current Custom IP: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-color)' }}>
+            Current IP: <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-color)' }}>
               {currentSubdomain ? `${currentSubdomain}.pocketcraft.online` : 'None'}
             </code>
           </p>
