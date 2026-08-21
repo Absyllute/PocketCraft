@@ -4,13 +4,11 @@ import { useTheme } from "../lib/ThemeContext";
 import { useLowEndDevice } from "../hooks/useLowEndDevice";
 
 const screenshots = [
-  { id: 1, title: "Homepage", image: "/homepage.png" },
-  { id: 2, title: "Plugins Page", image: "/pluginspage.png" },
-  { id: 3, title: "Server Settings", image: "/serversettings.png" },
-  { id: 4, title: "Advanced Settings", image: "/advanced settings.png" },
-  { id: 5, title: "Version Selection", image: "/version selection screen.png" },
-  { id: 6, title: "Player Dashboard", image: "/playerdashboard.png" },
-  { id: 7, title: "Backup & Restore", image: "/world backup adn restore screen.png" },
+  { id: 1, title: "Operator Chat", image: "/screenshot-chat.png" },
+  { id: 2, title: "App Themes & Customization", image: "/screenshot-themes.png" },
+  { id: 3, title: "Server & Performance Settings", image: "/screenshot-settings.png" },
+  { id: 4, title: "Resource Packs & Mods", image: "/screenshot-mods.png" },
+  { id: 5, title: "Worlds & Cloud Backups", image: "/screenshot-backups.png" },
 ];
 
 interface ScreenshotCardProps {
