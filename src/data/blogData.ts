@@ -10,16 +10,16 @@ export interface BlogPost {
 export const blogPosts: BlogPost[] = [
   {
     id: "beta-launch",
-    title: "PocketCraft Beta Launch",
+    title: "PocketHost Beta Launch",
     date: "March 31, 2026",
     category: "Announcement",
-    excerpt: "I'm excited to announce the beta release of PocketCraft. Host Minecraft servers on your Android phone with zero setup.",
+    excerpt: "I'm excited to announce the beta release of PocketHost. Host Minecraft servers on your Android phone with zero setup.",
     content: `
-I'm thrilled to announce that PocketCraft is now available in beta! After months of development and testing, I'm ready to share my vision with the world.
+I'm thrilled to announce that PocketHost is now available in beta! After months of development and testing, I'm ready to share my vision with the world.
 
-## What is PocketCraft?
+## What is PocketHost?
 
-PocketCraft lets you host a real Minecraft Java Edition server directly on your Android phone. No PC required, no complex setup, just tap and play. Your server runs on AWS-powered relay infrastructure, so your friends can join from anywhere in the world.
+PocketHost lets you host a real Minecraft Java Edition server directly on your Android phone. No PC required, no complex setup, just tap and play. Your server runs on AWS-powered relay infrastructure, so your friends can join from anywhere in the world.
 
 ## Key Features (Beta)
 
@@ -32,7 +32,7 @@ PocketCraft lets you host a real Minecraft Java Edition server directly on your 
 
 ## Getting Started
 
-1. Download PocketCraft from the website
+1. Download PocketHost from the website
 2. Select your Minecraft version
 3. Start your server
 4. Share the join address with your friends
@@ -43,7 +43,7 @@ That's it! Your server is live.
 
 I have an exciting roadmap ahead. Phase 4 will bring world backups to Google Drive, advanced monitoring, and even more customization options.
 
-Thank you for being part of the PocketCraft journey!
+Thank you for being part of the PocketHost journey!
     `,
   },
   {
@@ -53,19 +53,19 @@ Thank you for being part of the PocketCraft journey!
     category: "Feature",
     excerpt: "Bedrock and Java players can now play together on the same server. No more separate servers for different platforms.",
     content: `
-One of the most requested features is now live: cross-platform play! Bedrock Edition players (console, mobile, Windows 10/11) can now join Java Edition servers hosted on PocketCraft.
+One of the most requested features is now live: cross-platform play! Bedrock Edition players (console, mobile, Windows 10/11) can now join Java Edition servers hosted on PocketHost.
 
 ## How It Works
 
-Your PocketCraft server automatically supports Bedrock clients on the same WiFi network. When a Bedrock player enters your server's LAN IP address, they connect to the same world as your Java-playing friends.
+Your PocketHost server automatically supports Bedrock clients on the same WiFi network. When a Bedrock player enters your server's LAN IP address, they connect to the same world as your Java-playing friends.
 
 ## Getting Started
 
-Good news! Bedrock compatibility is already enabled by default on all PocketCraft servers. Your Bedrock-playing friends can join immediately without any extra configuration needed.
+Good news! Bedrock compatibility is already enabled by default on all PocketHost servers. Your Bedrock-playing friends can join immediately without any extra configuration needed.
 
 **Quick Steps:**
 
-1. Open PocketCraft app
+1. Open PocketHost app
 2. Go to Server Console
 3. Note your LAN IP address (example: 192.168.1.100)
 4. Share this address with Bedrock players on your WiFi network
@@ -102,7 +102,7 @@ Phase 5 will bring a major upgrade: Bedrock players will be able to join through
 
 I'm also working on better integration between Java and Bedrock editions, including unified chat, skin compatibility, and cross-platform achievements.
 
-Thank you for testing this experimental feature and helping me improve PocketCraft!
+Thank you for testing this experimental feature and helping me improve PocketHost!
     `,
   },
   {
@@ -110,9 +110,9 @@ Thank you for testing this experimental feature and helping me improve PocketCra
     title: "Server Optimization Tips",
     date: "April 2, 2026",
     category: "Guide",
-    excerpt: "Learn how to optimize your PocketCraft server for maximum performance and player slots on your Android device.",
+    excerpt: "Learn how to optimize your PocketHost server for maximum performance and player slots on your Android device.",
     content: `
-Running a server on mobile is different from running one on a PC. Here are my best tips to get the most out of your PocketCraft server.
+Running a server on mobile is different from running one on a PC. Here are my best tips to get the most out of your PocketHost server.
 
 ## 1. Manage Your RAM
 
@@ -162,9 +162,9 @@ Try these tips and let me know how it goes!
     title: "Plugin Support Released",
     date: "April 3, 2026",
     category: "Feature",
-    excerpt: "PocketCraft now supports Bukkit and Spigot plugins. Install your favorite plugins with zero downtime.",
+    excerpt: "PocketHost now supports Bukkit and Spigot plugins. Install your favorite plugins with zero downtime.",
     content: `
-Plugins are now fully supported in PocketCraft! Install your favorite Bukkit and Spigot plugins with zero downtime using my new plugin manager.
+Plugins are now fully supported in PocketHost! Install your favorite Bukkit and Spigot plugins with zero downtime using my new plugin manager.
 
 ## What are Plugins?
 
@@ -177,7 +177,7 @@ Plugins extend your Minecraft server with custom features like:
 
 ## How to Install Plugins
 
-1. Open PocketCraft app
+1. Open PocketHost app
 2. Navigate to Plugins Hub
 3. Browse or search for plugins
 4. Click "Install"

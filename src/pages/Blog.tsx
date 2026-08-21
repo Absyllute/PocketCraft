@@ -29,7 +29,7 @@ export default function Blog() {
               Blog
             </h1>
             <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-              Latest updates, guides, and news about PocketCraft.
+              Latest updates, guides, and news about PocketHost.
             </p>
           </motion.div>
         </div>
@@ -97,7 +97,7 @@ export default function Blog() {
             Stay Updated
           </h2>
           <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-            Follow my Discord and Instagram for the latest news about PocketCraft.
+            Follow my Discord and Instagram for the latest news about PocketHost.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <a
@@ -109,7 +109,7 @@ export default function Blog() {
               Discord
             </a>
             <a
-              href="https://www.instagram.com/pocketcraftmc"
+              href="https://www.instagram.com/pockethostmc"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-duo-secondary px-8 py-3 inline-block text-sm"

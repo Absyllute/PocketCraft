@@ -29,7 +29,7 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
             <motion.img
               src="/app-icon-circle-hd.png"
-              alt="PocketCraft"
+              alt="PocketHost"
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-white/10"
               whileHover={{ rotate: 12, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 300 }}
@@ -37,7 +37,7 @@ export default function Navbar() {
             <span className={`text-lg sm:text-2xl font-extrabold font-minecraft ${
               theme === "dark" ? "text-white" : "text-black"
             }`}>
-              PocketCraft
+              PocketHost
             </span>
           </Link>
 

@@ -16,7 +16,7 @@ const communityLinks = [
     icon: Users,
     title: "Instagram",
     description: "Follow for news, updates, and showcase of amazing servers.",
-    url: "https://www.instagram.com/pocketcraftmc",
+    url: "https://www.instagram.com/pockethostmc",
     color: "#E1306C",
   },
 ];
@@ -39,7 +39,7 @@ export default function Community() {
               Join the Community
             </h1>
             <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-              Connect with PocketCraft players around the world. Share your servers, get help, and be part of the growing community.
+              Connect with PocketHost players around the world. Share your servers, get help, and be part of the growing community.
             </p>
           </motion.div>
         </div>
@@ -101,7 +101,7 @@ export default function Community() {
             Ready to Join?
           </h2>
           <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-            Jump into Discord and say hello to the PocketCraft community!
+            Jump into Discord and say hello to the PocketHost community!
           </p>
           <a
             href="https://discord.com/invite/nc7ceYWVfT"

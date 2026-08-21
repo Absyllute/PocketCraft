@@ -125,14 +125,14 @@ export const FinancialHero = ({
         >
           <motion.img
             src={imageUrl2}
-            alt="PocketCraft Background"
+            alt="PocketHost Background"
             variants={cardItemVariants}
             whileHover={{ y: -8, rotate: -4, transition: { duration: 0.3 } }}
             className="absolute h-40 sm:h-60 md:h-72 rounded-2xl shadow-2xl object-cover transform rotate-[-6deg] translate-x-20 sm:translate-x-28 border-2 border-white/5"
           />
           <motion.img
             src={imageUrl1}
-            alt="PocketCraft Foreground"
+            alt="PocketHost Foreground"
             variants={cardItemVariants}
             whileHover={{ y: -8, rotate: 4, transition: { duration: 0.3 } }}
             className="absolute h-40 sm:h-60 md:h-72 rounded-2xl shadow-2xl object-cover transform rotate-[6deg] -translate-x-12 sm:-translate-x-20 border-2 border-white/5"

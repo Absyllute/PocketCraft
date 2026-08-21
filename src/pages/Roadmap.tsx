@@ -82,7 +82,7 @@ export default function Roadmap() {
               Development Roadmap
             </h1>
             <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-              My vision for PocketCraft. See what's done, in progress, and coming next.
+              My vision for PocketHost. See what's done, in progress, and coming next.
             </p>
           </motion.div>
         </div>
@@ -191,7 +191,7 @@ export default function Roadmap() {
             Have Ideas?
           </h2>
           <p className={`text-lg mb-8 ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-            Help shape the future of PocketCraft. Share your feature requests on Discord.
+            Help shape the future of PocketHost. Share your feature requests on Discord.
           </p>
           <a
             href="https://discord.com/invite/nc7ceYWVfT"

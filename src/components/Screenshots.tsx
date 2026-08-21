@@ -174,7 +174,7 @@ export default function Screenshots() {
           className="text-center mb-6 sm:mb-8"
         >
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#7FE620] tracking-tight">
-            PocketCraft
+            PocketHost
           </h1>
           <motion.div
             className="w-16 h-1 bg-[#7FE620] mx-auto mt-2 rounded-full"

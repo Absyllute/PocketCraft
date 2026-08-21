@@ -7,9 +7,9 @@ import { useTheme } from "../lib/ThemeContext";
 
 const faqs = [
   {
-    question: "Do I need a PC to run PocketCraft?",
+    question: "Do I need a PC to run PocketHost?",
     answer:
-      "No! PocketCraft runs entirely on your Android phone. You don't need a computer, laptop, or separate server. All you need is an Android device and an internet connection.",
+      "No! PocketHost runs entirely on your Android phone. You don't need a computer, laptop, or separate server. All you need is an Android device and an internet connection.",
   },
   {
     question: "Can Bedrock players join my Java server?",
@@ -19,7 +19,7 @@ const faqs = [
   {
     question: "How much does it cost?",
     answer:
-      "PocketCraft is free to download and use. You can host one world server with unlimited player slots. However, relay hosting involves costs to keep servers running online across the globe. Some premium features may be introduced in the future, such as hosting multiple worlds simultaneously, advanced analytics, or priority relay infrastructure. These may be available through a one-time purchase or optional ads. The core experience will always remain free.",
+      "PocketHost is free to download and use. You can host one world server with unlimited player slots. However, relay hosting involves costs to keep servers running online across the globe. Some premium features may be introduced in the future, such as hosting multiple worlds simultaneously, advanced analytics, or priority relay infrastructure. These may be available through a one-time purchase or optional ads. The core experience will always remain free.",
   },
   {
     question: "Will my server stay online when I lock my phone?",
@@ -34,7 +34,7 @@ const faqs = [
   {
     question: "Can I install plugins and mods?",
     answer:
-      "Yes! PocketCraft supports Bukkit plugins and Spigot community plugins. Drag and drop .jar files directly in the app. Changes take effect immediately.",
+      "Yes! PocketHost supports Bukkit plugins and Spigot community plugins. Drag and drop .jar files directly in the app. Changes take effect immediately.",
   },
   {
     question: "Is my world data safe?",
@@ -44,7 +44,7 @@ const faqs = [
   {
     question: "Do I need port forwarding?",
     answer:
-      "No! PocketCraft uses proprietary relay technology so players connect without any router configuration. Just tap start and share the join link.",
+      "No! PocketHost uses proprietary relay technology so players connect without any router configuration. Just tap start and share the join link.",
   },
 ];
 
@@ -67,7 +67,7 @@ export default function FAQ() {
               Frequently Asked Questions
             </h1>
             <p className={`text-lg max-w-2xl mx-auto ${theme === "dark" ? "text-white/55" : "text-black/60"}`}>
-              Everything you need to know about PocketCraft. Can't find your answer? Reach out on Discord.
+              Everything you need to know about PocketHost. Can't find your answer? Reach out on Discord.
             </p>
           </motion.div>
         </div>

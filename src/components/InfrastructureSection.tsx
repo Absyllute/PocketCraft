@@ -6,7 +6,7 @@ const infrastructureFeatures = [
     icon: Cloud,
     title: "AWS Global Relay",
     description: "Distributed across multiple regions for ultra-low latency worldwide",
-    detail: "Play.pocketcraft.online",
+    detail: "Play.pockethost.online",
     gradient: "from-blue-400 to-blue-600",
   },
   {
@@ -81,7 +81,7 @@ export default function InfrastructureSection() {
             Enterprise-Grade <br /> <span className="text-[#7FE620]">Hosting</span> on Mobile
           </h2>
           <p className="text-black/60 text-lg font-medium max-w-2xl">
-            PocketCraft runs on a globally distributed AWS infrastructure, giving your players the same experience as traditional server hosting—but from your phone.
+            PocketHost runs on a globally distributed AWS infrastructure, giving your players the same experience as traditional server hosting—but from your phone.
           </p>
         </motion.div>
 
@@ -172,7 +172,7 @@ export default function InfrastructureSection() {
                   {
                     step: "3",
                     title: "Get Public Address",
-                    desc: "Receive a unique play.pocketcraft.online address",
+                    desc: "Receive a unique play.pockethost.online address",
                   },
                   {
                     step: "4",

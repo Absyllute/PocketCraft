@@ -280,7 +280,7 @@ export function ModernHero() {
         >
           <motion.a
             href="/api/apk/download"
-            download="PocketCraft.apk"
+            download="PocketHost.apk"
             className="btn-duo px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.98 }}

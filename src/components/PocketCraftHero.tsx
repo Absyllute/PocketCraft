@@ -2,7 +2,7 @@
 
 import { Spotlight } from "./ui/spotlight"
 
-export function PocketCraftHero() {
+export function PocketHostHero() {
   const scrollToDownload = () => {
     document.getElementById("download")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -68,7 +68,7 @@ export function PocketCraftHero() {
                   Join Discord
                 </a>
                 <a
-                  href="https://www.instagram.com/pocketcraftmc?igsh=NTRnZGI4MHFuYXd3&utm_source=qr"
+                  href="https://www.instagram.com/pockethostmc?igsh=NTRnZGI4MHFuYXd3&utm_source=qr"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#E1306C]/10 hover:bg-[#E1306C]/20 border border-[#E1306C]/50 px-8 py-3.5 rounded-full text-white font-medium transition-all flex items-center justify-center"

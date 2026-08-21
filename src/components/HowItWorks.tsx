@@ -7,7 +7,7 @@ const steps = [
   {
     number: "01",
     title: "Download the App",
-    description: "Install PocketCraft on your Android device. No root required.",
+    description: "Install PocketHost on your Android device. No root required.",
     tag: "2 seconds",
     icon: MINECRAFT_ICONS.steps.download,
   },

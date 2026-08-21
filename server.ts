@@ -38,7 +38,7 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
   const owner = process.env.GITHUB_REPO_OWNER || "AleemKanyu";
-  const repo = process.env.GITHUB_REPO_NAME || "PocketCraft";
+  const repo = process.env.GITHUB_REPO_NAME || "PocketHost";
   const releasesApiUrl = `https://api.github.com/repos/${owner}/${repo}/releases?per_page=10`;
   const legacyOverrideApkUrl = process.env.GITHUB_APK_URL || process.env.VITE_APK_URL || "";
   const forceStaticApkUrl = process.env.FORCE_STATIC_APK_URL === "true";
@@ -66,7 +66,7 @@ async function startServer() {
     const headers: Record<string, string> = {
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "PocketCraft-website",
+      "User-Agent": "PocketHost-website",
     };
 
     if (process.env.GITHUB_TOKEN) {
@@ -172,7 +172,7 @@ async function startServer() {
   app.head("/api/apk/download", (_req, res) => {
     res.status(200);
     res.setHeader("Content-Type", "application/vnd.android.package-archive");
-    res.setHeader("Content-Disposition", 'attachment; filename="PocketCraft.apk"');
+    res.setHeader("Content-Disposition", 'attachment; filename="PocketHost.apk"');
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("Accept-Ranges", "bytes");
     res.end();
@@ -221,7 +221,7 @@ async function startServer() {
 
       res.status(upstreamResponse.status === 206 ? 206 : 200);
       res.setHeader("Content-Type", upstreamType || "application/vnd.android.package-archive");
-      res.setHeader("Content-Disposition", 'attachment; filename="PocketCraft.apk"');
+      res.setHeader("Content-Disposition", 'attachment; filename="PocketHost.apk"');
       res.setHeader("Cache-Control", "no-store");
       res.setHeader("Accept-Ranges", upstreamAcceptRanges || "bytes");
 

@@ -15,7 +15,7 @@ const quickLinks = [
 const legalLinks = [
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Service" },
-  { href: "mailto:support@pocketcraft.online", label: "Contact Us", external: true },
+  { href: "mailto:support@pockethost.online", label: "Contact Us", external: true },
 ];
 
 export default function Footer() {
@@ -56,7 +56,7 @@ export default function Footer() {
             <Link to="/" className="flex items-center gap-3 group mb-4">
               <motion.img
                 src={MINECRAFT_ICONS.brand}
-                alt="PocketCraft"
+                alt="PocketHost"
                 className="w-10 h-10 rounded-full object-cover border border-white/15"
                 whileHover={{ rotate: 12 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -65,7 +65,7 @@ export default function Footer() {
                   e.currentTarget.src = "/grass-block.png";
                 }}
               />
-              <span className="text-xl font-minecraft text-white">PocketCraft</span>
+              <span className="text-xl font-minecraft text-white">PocketHost</span>
             </Link>
             <p className="text-white/30 text-sm leading-relaxed mb-6 max-w-xs">
               Host your own Minecraft Java server from your Android phone. Free, no root, instant setup.
@@ -178,11 +178,11 @@ export default function Footer() {
               Download
             </h4>
             <p className="text-white/30 text-sm mb-4 leading-relaxed">
-              Get PocketCraft on your Android device with direct APK download.
+              Get PocketHost on your Android device with direct APK download.
             </p>
             <motion.a
               href="/api/apk/download"
-              download="PocketCraft.apk"
+              download="PocketHost.apk"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#7FE620] hover:bg-[#6FD614] text-black text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -199,7 +199,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/15 text-[10px] font-mono uppercase tracking-[0.2em] text-center sm:text-left">
-            © {new Date().getFullYear()} PocketCraft. All Rights Reserved.
+            © {new Date().getFullYear()} PocketHost. All Rights Reserved.
           </p>
           <p className="text-white/10 text-[10px] uppercase tracking-[0.15em]">
             Made for players, by players 🎮

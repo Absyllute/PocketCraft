@@ -86,7 +86,7 @@ export default function Features() {
           <p className={`text-lg font-medium leading-relaxed max-w-2xl ${
             theme === "dark" ? "text-white/50" : "text-black/60"
           }`}>
-            PocketCraft turns your Android phone into a high-performance Minecraft server with zero compromise on features or performance.
+            PocketHost turns your Android phone into a high-performance Minecraft server with zero compromise on features or performance.
           </p>
         </motion.div>
 

@@ -9,7 +9,7 @@ const sections = [
     icon: Eye,
     title: "1. Information We Collect",
     content: [
-      "PocketCraft is designed with your privacy in mind. We collect minimal data to provide and improve our service:",
+      "PocketHost is designed with your privacy in mind. We collect minimal data to provide and improve our service:",
       "• **Device Information**: Basic device model and Android version to ensure compatibility and optimize performance.",
       "• **Usage Analytics**: Anonymous, aggregated data about app usage patterns (e.g., server start/stop events) to improve stability. No personal data is included.",
       "• **Crash Reports**: Automatic crash logs to help us fix bugs and improve reliability. These contain technical stack traces only — no personal information.",
@@ -21,7 +21,7 @@ const sections = [
     icon: Server,
     title: "2. How Your Server Works",
     content: [
-      "PocketCraft runs a Minecraft Java Edition server directly on your Android device. This means:",
+      "PocketHost runs a Minecraft Java Edition server directly on your Android device. This means:",
       "• **Your world data stays on your device.** We never upload, access, or store your Minecraft worlds, configurations, or plugin data on our servers.",
       "• **Server files are local.** All server JARs, configs, and player data are stored in your device's local storage.",
       "• **Relay tunneling is ephemeral.** Our relay service creates a temporary network tunnel so other players can connect to your phone. Once your server stops, the tunnel is destroyed. No gameplay data passes through or is stored on our relay infrastructure.",
@@ -32,8 +32,8 @@ const sections = [
     icon: Users,
     title: "3. Third-Party Services",
     content: [
-      "PocketCraft may interact with the following third-party services:",
-      "• **Mojang / Microsoft**: Minecraft is a trademark of Mojang Studios / Microsoft. PocketCraft is an independent project and is not affiliated with, endorsed by, or connected to Mojang or Microsoft in any way. Players connecting to your server use their own Minecraft accounts.",
+      "PocketHost may interact with the following third-party services:",
+      "• **Mojang / Microsoft**: Minecraft is a trademark of Mojang Studios / Microsoft. PocketHost is an independent project and is not affiliated with, endorsed by, or connected to Mojang or Microsoft in any way. Players connecting to your server use their own Minecraft accounts.",
       "• **Discord**: We maintain a community Discord server for support and updates. Discord's own privacy policy applies when you use their platform.",
       "• **CDN Services**: We use content delivery networks to serve app updates and assets. These services may process your IP address to deliver content.",
       "We do not sell, rent, or share your data with any third parties for advertising or marketing purposes.",
@@ -43,7 +43,7 @@ const sections = [
     icon: Users,
     title: "4. Children's Privacy",
     content: [
-      "PocketCraft does not knowingly collect personal information from children under the age of 13. Our app is a tool for hosting Minecraft servers and does not require account creation or personal data submission.",
+      "PocketHost does not knowingly collect personal information from children under the age of 13. Our app is a tool for hosting Minecraft servers and does not require account creation or personal data submission.",
       "If you are a parent or guardian and believe your child has provided personal information to us (e.g., through a support email), please contact us and we will promptly delete it.",
       "Parents should supervise their children's multiplayer gaming activities and ensure appropriate behavior when hosting public servers.",
     ],
@@ -65,7 +65,7 @@ const sections = [
     title: "6. Contact Us",
     content: [
       "If you have any questions about this Privacy Policy or your data, you can reach us at:",
-      "• **Email**: support@pocketcraft.online",
+      "• **Email**: support@pockethost.online",
       "• **Discord**: https://discord.com/invite/nc7ceYWVfT",
       "We aim to respond to all privacy-related inquiries within 72 hours.",
     ],
@@ -118,7 +118,7 @@ export default function Privacy() {
               theme === "dark" ? "text-white/50" : "text-black/60"
             }`}
           >
-            How PocketCraft handles your data — spoiler: we barely collect any.
+            How PocketHost handles your data — spoiler: we barely collect any.
           </motion.p>
 
           <motion.p

@@ -24,19 +24,19 @@ const DiscordIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 const homeFaqs = [
   {
-    question: "Do I need a PC to use PocketCraft?",
+    question: "Do I need a PC to use PocketHost?",
     answer:
-      "No. PocketCraft is built for Android-first hosting, so you can start and manage your server directly from your phone.",
+      "No. PocketHost is built for Android-first hosting, so you can start and manage your server directly from your phone.",
   },
   {
     question: "Can Bedrock players join my server?",
     answer:
-      "Yes. PocketCraft supports Bedrock crossplay so players across editions can connect when configured.",
+      "Yes. PocketHost supports Bedrock crossplay so players across editions can connect when configured.",
   },
   {
     question: "Do I need to port forward my router?",
     answer:
-      "No. PocketCraft uses relay networking so you can host without manual router setup in most cases.",
+      "No. PocketHost uses relay networking so you can host without manual router setup in most cases.",
   },
   {
     question: "Will my world be deleted after an update?",
@@ -157,7 +157,7 @@ const Home = () => {
               theme === "dark" ? "text-white" : "text-black"
             }`}
           >
-            Download PocketCraft APK
+            Download PocketHost APK
           </motion.h2>
 
           <motion.p
@@ -169,7 +169,7 @@ const Home = () => {
               theme === "dark" ? "text-white/50" : "text-black/60"
             }`}
           >
-            Tap below to download the latest PocketCraft APK and install it directly on your Android device.
+            Tap below to download the latest PocketHost APK and install it directly on your Android device.
           </motion.p>
 
           <motion.p
@@ -184,7 +184,7 @@ const Home = () => {
 
           <motion.a
             href="/api/apk/download"
-            download="PocketCraft.apk"
+            download="PocketHost.apk"
             className="btn-duo inline-flex items-center justify-center gap-3 px-6 sm:px-12 py-4 text-sm uppercase tracking-wider font-bold w-full sm:w-auto shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

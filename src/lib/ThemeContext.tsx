@@ -15,7 +15,7 @@ const ThemeContext = createContext<ThemeContextType>({
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("pocketcraft-theme") as Theme;
+      const stored = localStorage.getItem("pockethost-theme") as Theme;
       if (stored) return stored;
       // Default to light mode as requested
       return "light";
@@ -30,7 +30,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("pocketcraft-theme", theme);
+    localStorage.setItem("pockethost-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
