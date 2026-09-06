@@ -121,7 +121,7 @@ The app is designed to make server setup, administration, and player management 
 <h2 align="center"> Requirements </h2>
 
 - Android 8.0 or newer
-- At least 2 GB of RAM recommended
+- At least 4 GB of RAM recommended
 - Stable internet connection for relay-based access
 
 ---
